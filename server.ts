@@ -259,6 +259,12 @@ async function startServer() {
       if (activeUser) {
         const profile = db.customers.findProfile(activeUser.userId);
         if (profile) {
+          // If they redeemed points, deduct them from progress profile
+          const discountAmt = parseFloat(order.discount_amount || 0);
+          if (discountAmt > 0) {
+            const pointsToDeduct = Math.round(discountAmt / 0.05); // each point is 0.05 EUR
+            profile.loyalty_points = Math.max(0, profile.loyalty_points - pointsToDeduct);
+          }
           // 1 point for each 10 EUR Spent
           const pointsEarned = Math.floor(finalOrder.final_price / 10);
           profile.loyalty_points += pointsEarned;
@@ -353,6 +359,28 @@ async function startServer() {
       if (!updatedOrder) {
         res.status(404).json({ error: 'Objednávka sa nenašla' });
         return;
+      }
+
+      // If status is DELIVERED, record CashLedger for cash payments (Test Case 3)
+      if (status === 'DELIVERED') {
+        const order = db.get().orders.find((o: any) => o.id === req.params.id);
+        if (order) {
+          const assignment = db.get().courierAssignments.find((a: any) => a.order_id === order.id);
+          const courier_id = assignment ? assignment.courier_id : 'usr_courier1';
+          
+          // Check if we already logged cash for this order to prevent duplicate ledger items
+          const existingLedger = db.get().cashLedgers.find((cl: any) => cl.reference_order_id === order.id);
+          if (!existingLedger) {
+            db.cash.addLedger({
+              courier_id,
+              shift_id: 'shf_current',
+              amount: order.final_price,
+              type: 'COLLECT',
+              reference_order_id: order.id,
+              notes: `Inkaso hotovosti od zákazníka ${order.customer_name} pre objednávku ${order.order_number}`
+            });
+          }
+        }
       }
 
       // If status is CANCELLED, restore the stock! (Test Case 1)
@@ -629,6 +657,139 @@ async function startServer() {
   // API - Audit list view
   app.get('/api/admin/audit', (req, res) => {
     res.json(db.audit.all());
+  });
+
+  // API - Custom Cake Inquiries
+  app.post('/api/inquiries', (req, res) => {
+    try {
+      const activeUser = (req as any).user;
+      const { 
+        occasion, 
+        serving_count, 
+        cake_shape, 
+        flavor_profile, 
+        allergies_sk, 
+        visual_description, 
+        guest_name, 
+        guest_phone, 
+        guest_email,
+        budget_range,
+        delivery_type
+      } = req.body;
+
+      const newInq = db.inquiries.createCake({
+        user_id: activeUser?.userId,
+        guest_name: guest_name || 'Hosť',
+        guest_phone: guest_phone || '',
+        guest_email: guest_email || '',
+        occasion: occasion || 'CELEBRATION',
+        event_date: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().split('T')[0], 
+        serving_count: parseInt(serving_count) || 15,
+        cake_shape: cake_shape || 'ROUND',
+        flavor_profile: flavor_profile || '',
+        allergies_sk: allergies_sk || '',
+        visual_description: visual_description || '',
+        budget_range: budget_range || '50-100 EUR',
+        delivery_type: delivery_type || 'PICKUP'
+      });
+
+      // Log audit
+      db.audit.log({
+        user_id: activeUser?.userId,
+        action_type: 'CAKE_INQUIRY_CREATE',
+        table_name: 'CustomCakeInquiry',
+        record_id: newInq.id,
+        new_values: JSON.stringify({ number: newInq.inquiry_number, email: newInq.guest_email }),
+        ip_address: req.ip || '127.0.0.1'
+      });
+
+      res.status(201).json(newInq);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.get('/api/admin/inquiries', (req, res) => {
+    try {
+      res.json(db.inquiries.allCake());
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post('/api/admin/inquiries/:id/status', (req, res) => {
+    try {
+      const { status, manager_notes, price_offer, convert_to_order } = req.body;
+      const activeUser = (req as any).user;
+      
+      const priceVal = price_offer !== undefined ? parseFloat(price_offer) : undefined;
+      const inq = db.get().customCakeInquiries.find((i: any) => i.id === req.params.id);
+      if (!inq) {
+        res.status(404).json({ error: 'Dopyt neexistuje' });
+        return;
+      }
+
+      let convertedOrderId = undefined;
+
+      // Convert Custom Cake to Order if approved
+      if (convert_to_order && inq.status !== 'CONVERTED') {
+        const finalPrice = priceVal || inq.price_offer || 80;
+        
+        // Ensure there is stock to fulfill a custom order (we add 1 to inv_torta to allow checkout)
+        const stockObj = db.inventory.get('p_torta_coko', 'br_hlohovec');
+        if (stockObj && stockObj.quantity <= 0) {
+          db.inventory.updateStock('p_torta_coko', 'br_hlohovec', 10, 'usr_admin', 'ADJUSTMENT', 'Navýšenie skladu pre dopyt');
+        }
+
+        const finalOrder = db.orders.create({
+          order: {
+            user_id: inq.user_id,
+            total_price: finalPrice,
+            delivery_price: inq.delivery_type === 'DELIVERY' ? 4.90 : 0.00,
+            discount_amount: 0,
+            final_price: finalPrice + (inq.delivery_type === 'DELIVERY' ? 4.90 : 0.00),
+            delivery_type: inq.delivery_type || 'PICKUP',
+            branch_id: 'br_hlohovec',
+            scheduled_date: inq.event_date || new Date().toISOString().split('T')[0],
+            scheduled_time_slot: '12:00 - 14:00',
+            customer_notes: `🎂 TORTA NA MIERU (${inq.inquiry_number}): Príchuť: ${inq.flavor_profile}. Dizajn: ${inq.visual_description}`,
+            contact_email: inq.guest_email || 'olajos-guest@gmail.com',
+            contact_phone: inq.guest_phone || '+421901234567',
+            customer_name: inq.guest_name || 'Hosť',
+          },
+          items: [
+            {
+              product_id: 'p_torta_coko',
+              quantity: 1,
+              customization_notes: `Konvertovaný dopyt č. ${inq.inquiry_number}`
+            }
+          ]
+        });
+
+        convertedOrderId = finalOrder.id;
+      }
+
+      const updated = db.inquiries.updateCake(
+        req.params.id,
+        convertedOrderId ? 'CONVERTED' : (status || inq.status),
+        manager_notes,
+        priceVal,
+        convertedOrderId || inq.converted_order_id
+      );
+
+      db.audit.log({
+        user_id: activeUser?.userId || 'usr_admin',
+        action_type: convertedOrderId ? 'CAKE_INQUIRY_CONVERT_SUCCESS' : 'CAKE_INQUIRY_STATUS_UPDATE',
+        table_name: 'CustomCakeInquiry',
+        record_id: req.params.id,
+        new_values: JSON.stringify({ status: updated?.status, price: updated?.price_offer, converted_id: convertedOrderId }),
+        ip_address: req.ip || '127.0.0.1'
+      });
+
+      res.json(updated);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
   });
 
 

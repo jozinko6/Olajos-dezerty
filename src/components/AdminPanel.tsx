@@ -12,7 +12,13 @@ export default function AdminPanel() {
   const [couriers, setCouriers] = useState<any[]>([]);
   const [audit, setAudit] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'finance' | 'audit'>('orders');
+  const [inquiries, setInquiries] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'orders' | 'products' | 'finance' | 'audit' | 'inquiries'>('orders');
+
+  // Custom cake inquiry action state
+  const [updatingInqId, setUpdatingInqId] = useState<string | null>(null);
+  const [inqPriceOffer, setInqPriceOffer] = useState('');
+  const [inqNotes, setInqNotes] = useState('');
   
   // Create product form state
   const [pName, setPName] = useState('');
@@ -51,6 +57,9 @@ export default function AdminPanel() {
 
       const prods = await api.request('/api/products');
       setProducts(prods);
+
+      const inqs = await api.request('/api/admin/inquiries');
+      setInquiries(inqs);
     } catch (e: any) {
       setGlobalError(e.message || 'Chyba pri aktualizácii admin panelu');
     } finally {
@@ -68,6 +77,24 @@ export default function AdminPanel() {
         method: 'POST',
         body: JSON.stringify({ status: newStatus, notes: note })
       });
+      refreshAll();
+    } catch (e: any) {
+      alert(e.message);
+    }
+  };
+
+  const handleInquiryAction = async (id: string, status: string, notes: string, priceOffer: number, convert: boolean) => {
+    try {
+      await api.request(`/api/admin/inquiries/${id}/status`, {
+        method: 'POST',
+        body: JSON.stringify({
+          status,
+          manager_notes: notes,
+          price_offer: priceOffer,
+          convert_to_order: convert
+        })
+      });
+      setUpdatingInqId(null);
       refreshAll();
     } catch (e: any) {
       alert(e.message);
@@ -209,6 +236,13 @@ export default function AdminPanel() {
           className={`flex-1 py-3 px-4 text-center border-b-2 font-serif text-sm font-medium transition whitespace-nowrap ${activeTab === 'audit' ? 'border-amber-950 text-amber-950 bg-white' : 'border-transparent text-stone-600 hover:text-stone-950'}`}
         >
           Audit Logy ({audit.length})
+        </button>
+        <button 
+          id="tab-inquiries"
+          onClick={() => setActiveTab('inquiries')}
+          className={`flex-1 py-3 px-4 text-center border-b-2 font-serif text-sm font-medium transition whitespace-nowrap ${activeTab === 'inquiries' ? 'border-amber-950 text-amber-950 bg-white' : 'border-transparent text-stone-600 hover:text-stone-950'}`}
+        >
+          Dopyty na torty ({inquiries.length})
         </button>
       </div>
 
@@ -722,6 +756,197 @@ export default function AdminPanel() {
                 )}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* CUSTOM CAKE INQUIRIES TAB */}
+        {activeTab === 'inquiries' && (
+          <div className="space-y-6 animate-fade-in text-stone-800">
+            <div className="flex justify-between items-center border-b border-stone-200 pb-3">
+              <h3 className="font-serif text-xl text-amber-950 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-700" />
+                Dopyty na torty a zakázkovú výrobu
+              </h3>
+              <span className="p-1.5 px-3 bg-amber-50 rounded-full border border-amber-200 font-serif text-xs text-amber-900 font-semibold shadow-inner">
+                Aktívne dopyty: {inquiries.length} dopytov
+              </span>
+            </div>
+
+            {inquiries.length === 0 ? (
+              <div className="text-center py-16 bg-stone-50 rounded-2xl border border-stone-200">
+                <Sparkles className="w-12 h-12 text-stone-300 mx-auto mb-3" />
+                <p className="text-stone-500 font-serif text-base font-semibold">Žiadne zadané dopyty na torty neboli nájdené.</p>
+                <p className="text-stone-400 text-xs mt-1">Nové dopyty od zákazníkov sa automaticky zobrazia tu.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-6">
+                {inquiries.map((inq) => (
+                  <div key={inq.id} className="bg-stone-50/45 border border-stone-200 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row gap-6 hover:bg-stone-50/90 transition text-xs relative overflow-hidden">
+                    
+                    {/* Status corner badge */}
+                    <div className="absolute top-4 right-4">
+                      {inq.status === 'NEW' && <span className="px-3 py-1 rounded-full text-[10px] font-bold tracking-wider bg-blue-50 text-blue-800 border border-blue-200 uppercase">Nový dopyt</span>}
+                      {inq.status === 'REJECTED' && <span className="px-3 py-1 rounded-full text-[10px] font-bold tracking-wider bg-red-50 text-red-800 border border-red-200 uppercase">Zamietnutý</span>}
+                      {inq.status === 'APPROVED' && <span className="px-3 py-1 rounded-full text-[10px] font-bold tracking-wider bg-yellow-50 text-yellow-800 border border-yellow-200 uppercase">Navrhnutá ponuka</span>}
+                      {inq.status === 'CONVERTED' && <span className="px-3 py-1 rounded-full text-[10px] font-bold tracking-wider bg-green-50 text-green-800 border border-green-200 uppercase">Schválená objednávka</span>}
+                    </div>
+
+                    {/* Left Column: Spec details */}
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center gap-2.5">
+                        <span className="font-serif font-bold text-base text-stone-900">{inq.inquiry_number}</span>
+                        <span className="text-[10px] text-stone-400 font-semibold">{new Date(inq.created_at).toLocaleDateString('sk-SK')}</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-3.5 bg-white border border-stone-200/60 rounded-xl font-medium">
+                        <div>
+                          <span className="text-[10px] text-stone-400 block font-bold uppercase tracking-wider">Príležitosť</span>
+                          <span className="text-xs text-stone-900 pr-1">{inq.occasion}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-stone-400 block font-bold uppercase tracking-wider">Veľkosť</span>
+                          <span className="text-xs text-stone-950 font-bold">{inq.serving_count} porcií</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-stone-400 block font-bold uppercase tracking-wider">Tvar torty</span>
+                          <span className="text-xs text-stone-900 italic font-semibold">{inq.cake_shape}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-stone-400 block font-bold uppercase tracking-wider">Odber/Dovoz</span>
+                          <span className="text-xs text-stone-900 font-bold">{inq.delivery_type === 'DELIVERY' ? 'Dovoz kuriérom' : 'Osobný odber'}</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="font-bold text-stone-600">Požadovaná príchuť a zloženie:</span>
+                        <p className="bg-stone-100 p-2.5 rounded-lg border border-stone-200/50 italic text-stone-950 font-semibold">{inq.flavor_profile}</p>
+                      </div>
+
+                      {inq.allergies_sk && (
+                        <div className="space-y-1">
+                          <span className="font-bold text-red-600 block">Alergie a obmedzenia:</span>
+                          <p className="bg-red-50/50 border border-red-150 p-2 rounded text-red-850 font-semibold">{inq.allergies_sk}</p>
+                        </div>
+                      )}
+
+                      <div className="space-y-1">
+                        <span className="font-bold text-stone-600">Vizualizácia a predstava dizajnu:</span>
+                        <p className="text-stone-700 leading-relaxed font-normal bg-stone-50 p-2.5 rounded border border-stone-150">{inq.visual_description || 'Zákazník neuviedol špecifické dizajnové detaily.'}</p>
+                      </div>
+
+                      {/* Contact details */}
+                      <div className="p-3 bg-amber-50/30 border border-amber-900/10 rounded-xl space-y-1 text-stone-850">
+                        <span className="font-serif font-bold text-amber-950 block">Kontakt na klienta:</span>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                          <span>Meno: <strong className="font-bold text-stone-950">{inq.guest_name}</strong></span>
+                          <span>E-mail: <strong className="text-stone-950">{inq.guest_email}</strong></span>
+                          <span>Telefón: <strong className="text-stone-950">{inq.guest_phone}</strong></span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Column: Processing controls */}
+                    <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-stone-200 pt-4 md:pt-0 md:pl-6 space-y-4 flex flex-col justify-between">
+                      <div className="space-y-3">
+                        <div className="bg-white border border-stone-200 rounded-xl p-4 space-y-2">
+                          <span className="text-[10px] text-stone-400 block font-bold uppercase tracking-wider">Cenová ponuka</span>
+                          <div className="flex items-baseline gap-1">
+                            <span className="font-serif text-2xl font-bold text-stone-950">
+                              {inq.price_offer ? `${inq.price_offer} EUR` : 'Neurčená'}
+                            </span>
+                            {!inq.price_offer && <span className="text-[10px] text-amber-700 font-semibold">(Vyžaduje odhad)</span>}
+                          </div>
+                          
+                          {inq.manager_notes && (
+                            <div className="mt-2 text-[11px] text-stone-500 bg-stone-50 p-2 border border-stone-150 rounded">
+                              <strong className="block text-stone-700 uppercase text-[9px] font-bold tracking-wider">Poznámka manažéra:</strong>
+                              {inq.manager_notes}
+                            </div>
+                          )}
+                        </div>
+
+                        {updatingInqId === inq.id ? (
+                          <div className="p-4 bg-white border border-amber-200 rounded-xl space-y-3.5 shadow-sm">
+                            <h4 className="font-serif font-semibold text-xs text-amber-950">Spracovanie ponuky pre klienta</h4>
+                            
+                            <div>
+                              <label className="text-[10px] text-stone-500 block mb-0.5">Navrhovaná cena (EUR)</label>
+                              <input 
+                                type="number" 
+                                value={inqPriceOffer} 
+                                onChange={(e) => setInqPriceOffer(e.target.value)} 
+                                placeholder="napr. 110" 
+                                className="w-full p-2 border border-stone-300 rounded font-semibold text-stone-950 bg-stone-50 text-xs" 
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-[10px] text-stone-500 block mb-0.5">Poznámka / doplňujúci odkaz</label>
+                              <textarea 
+                                value={inqNotes} 
+                                onChange={(e) => setInqNotes(e.target.value)} 
+                                placeholder="Zápichy hotové, bez orechov..." 
+                                className="w-full p-2 border border-stone-300 rounded text-stone-950 bg-stone-50 text-xs h-16" 
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                              <button 
+                                onClick={() => handleInquiryAction(inq.id, 'REJECTED', inqNotes, parseFloat(inqPriceOffer) || 0, false)}
+                                className="py-2 bg-red-50 text-red-700 border border-red-200 rounded text-[11px] font-bold hover:bg-red-100 transition"
+                              >
+                                Zamietnuť dopyt
+                              </button>
+                              <button 
+                                onClick={() => handleInquiryAction(inq.id, 'APPROVED', inqNotes, parseFloat(inqPriceOffer) || 80, false)}
+                                className="py-2 bg-amber-955 text-amber-50 rounded text-[11px] font-bold hover:bg-amber-950 transition"
+                              >
+                                Uložiť ponuku
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          inq.status !== 'CONVERTED' ? (
+                            <button 
+                              onClick={() => {
+                                setUpdatingInqId(inq.id);
+                                setInqPriceOffer(String(inq.price_offer || ''));
+                                setInqNotes(inq.manager_notes || '');
+                              }}
+                              className="w-full py-2.5 bg-stone-900 border border-stone-800 hover:bg-stone-800 text-white font-semibold rounded-lg text-xs transition"
+                            >
+                              Upraviť kalkuláciu / pridať odkaz
+                            </button>
+                          ) : null
+                        )}
+                      </div>
+
+                      {inq.status !== 'CONVERTED' ? (
+                        <div className="border-t border-stone-200/60 pt-4 mt-2">
+                          <button 
+                            onClick={() => {
+                              const proposedPrice = parseFloat(inqPriceOffer) || inq.price_offer || 80;
+                              handleInquiryAction(inq.id, 'CONVERTED', inq.manager_notes || '', proposedPrice, true);
+                            }}
+                            className="w-full py-3 bg-green-700 hover:bg-green-800 text-white font-serif font-bold text-xs rounded-xl shadow transition flex items-center justify-center gap-1.5"
+                          >
+                            <Check className="w-4 h-4" />
+                            Schváliť & premeniť na skutočnú objednávku
+                          </button>
+                          <p className="text-[10px] text-stone-400 text-center mt-1">Po kliknutí sa dopyt schváli a automaticky zapíše medzi hlavné doručené objednávky s vybranou cenou.</p>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-green-50 border border-green-200 text-green-800 rounded-xl text-center space-y-1">
+                          <span className="font-bold text-[11px] block">✅ OBJEDNÁVKA ODOVZDANÁ NA VÝROBU</span>
+                          <p className="text-[10px] text-green-600">Dopyt bol plne schválený, premenený na objednávku a zaradený do expedície pekárskeho tímu Františka Olajosa.</p>
+                        </div>
+                      )}
+                    </div>
+
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

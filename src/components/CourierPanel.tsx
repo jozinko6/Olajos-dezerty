@@ -303,7 +303,7 @@ export default function CourierPanel({ courierId }: CourierPanelProps) {
         </div>
 
         {/* COURIER EARNINGS & BALANCE SUMMARY */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <h4 className="text-xs font-bold text-stone-500 uppercase tracking-widest pl-1">Moje denné financie</h4>
           <div className="bg-white border border-stone-200 p-4 rounded-xl grid grid-cols-2 gap-4 text-xs">
             <div className="border-r border-stone-100 pr-2">
@@ -316,6 +316,35 @@ export default function CourierPanel({ courierId }: CourierPanelProps) {
               <span className="font-bold text-stone-900 text-base mt-0.5 block">{finance.cash_balance?.toFixed(2) || '0.00'} EUR</span>
               <span className="text-[10px] text-stone-500 block leading-tight">Získané inkasom hotovosti od doručení</span>
             </div>
+          </div>
+
+          {/* Test Case 3 verification box */}
+          <div className="bg-amber-50/50 rounded-xl p-3.5 border border-amber-200 text-xs text-stone-850 space-y-2">
+            <span className="font-serif font-bold text-amber-955 flex items-center gap-1">
+              <span>🔍 Testovacie Overenie č. 3: Cash Ledger (Pokladničná kniha)</span>
+            </span>
+            <p className="text-[11px] text-stone-600 leading-normal">
+              Každé doručenie s hotovosťou automaticky pripíše odmenu kuriérovi a zapíše transakciu do Pokladničnej knihy na serveri. Uzávierku vykonáva manažér v administrácii.
+            </p>
+            {finance.ledger && finance.ledger.length > 0 ? (
+              <div className="mt-1 space-y-1.5 max-h-[140px] overflow-y-auto border-t border-amber-200/50 pt-2 font-mono text-[10px]">
+                {finance.ledger.map((l: any, i: number) => (
+                  <div key={l.id || i} className="p-2 bg-white border border-stone-150 rounded flex flex-col justify-between gap-1 shadow-2xs">
+                    <div className="flex justify-between items-center">
+                      <span className={`font-bold ${l.type === 'COLLECT' ? 'text-green-700' : 'text-red-700'}`}>
+                        {l.type === 'COLLECT' ? '📥 PRÍJEM' : '📤 UZÁVIERKA'} (+{l.amount.toFixed(2)} EUR)
+                      </span>
+                      <span className="text-stone-400 text-[8px]">{new Date(l.created_at).toLocaleTimeString('sk-SK')}</span>
+                    </div>
+                    <span className="text-stone-600 text-[9px] leading-tight mt-0.5 italic">"{l.notes}"</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-[10px] text-stone-400 italic text-center p-2 bg-white rounded border border-stone-150">
+                Žiadne záznamy v pokladničnej knihe. Na zobrazenie vykonajte doručenie s hotovosťou.
+              </div>
+            )}
           </div>
         </div>
 

@@ -31,6 +31,7 @@ export default function App() {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   
   // Filtering and dietary state
   const [onlyGlutenFree, setOnlyGlutenFree] = useState(false);
@@ -51,6 +52,14 @@ export default function App() {
   const [streetAddress, setStreetAddress] = useState('');
   const [checkoutSuccess, setCheckoutSuccess] = useState<any>(null);
 
+  // Premium sweet store checkout upgrades
+  const [loyaltyPoints, setLoyaltyPoints] = useState<number>(0);
+  const [giftWrapping, setGiftWrapping] = useState<boolean>(false);
+  const [greetingCard, setGreetingCard] = useState<boolean>(false);
+  const [greetingCardText, setGreetingCardText] = useState<string>('');
+  const [greetingCardStyle, setGreetingCardStyle] = useState<string>('elegance-gold');
+  const [useLoyaltyPoints, setUseLoyaltyPoints] = useState<boolean>(false);
+
   // Custom cake inquiry state
   const [cakeOccasion, setCakeOccasion] = useState<'WEDDING' | 'BIRTHDAY' | 'BAPTISM' | 'CELEBRATION'>('BIRTHDAY');
   const [cakeServings, setCakeServings] = useState('15');
@@ -64,6 +73,34 @@ export default function App() {
   const [currentView, setCurrentView] = useState<'shop' | 'cake-builder' | 'tracking' | 'admin' | 'courier'>('shop');
   const [trackingSearchToken, setTrackingSearchToken] = useState('');
   const [activeTrackingToken, setActiveTrackingToken] = useState('');
+
+  const fetchProfile = async () => {
+    try {
+      const token = api.getToken();
+      if (token) {
+        const prof = await api.request('/api/auth/profile');
+        setLoyaltyPoints(prof.loyalty_points || 0);
+        if (prof.first_name) {
+          setCustomerName(`${prof.first_name} ${prof.last_name}`);
+          setCustomerEmail(prof.email);
+          if (prof.phone) setCustomerPhone(prof.phone);
+        }
+      } else {
+        setLoyaltyPoints(0);
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchProfile();
+    } else {
+      setLoyaltyPoints(0);
+      setUseLoyaltyPoints(false);
+    }
+  }, [currentUser]);
 
   // Loaded at boot
   useEffect(() => {
@@ -174,7 +211,11 @@ export default function App() {
     ? (itemsSubtotal >= selectedZoneConfig.freeThreshold ? 0.00 : selectedZoneConfig.price)
     : 0.00;
 
-  const orderTotal = itemsSubtotal + deliveryCost;
+  const giftWrappingCost = giftWrapping ? 2.50 : 0.00;
+  const greetingCardCost = greetingCard ? 1.50 : 0.00;
+  const loyaltyDiscount = useLoyaltyPoints && currentUser ? Math.min(loyaltyPoints * 0.05, itemsSubtotal * 0.5) : 0;
+
+  const orderTotal = Math.max(0, itemsSubtotal + deliveryCost + giftWrappingCost + greetingCardCost - loyaltyDiscount);
 
   // Checkout submission
   const handleCheckout = async (e: React.FormEvent) => {
@@ -191,6 +232,7 @@ export default function App() {
         order: {
           total_price: itemsSubtotal,
           delivery_price: deliveryCost,
+          discount_amount: loyaltyDiscount,
           final_price: orderTotal,
           delivery_type: deliveryType,
           branch_id: 'br_hlohovec',
@@ -200,7 +242,11 @@ export default function App() {
           contact_email: customerEmail,
           contact_phone: customerPhone,
           customer_name: customerName,
-          ...(deliveryType === 'DELIVERY' ? { delivery_address: streetAddress } : {})
+          ...(deliveryType === 'DELIVERY' ? { delivery_address: streetAddress } : {}),
+          gift_wrapped: giftWrapping,
+          greeting_card: greetingCard,
+          greeting_card_text: greetingCardText,
+          greeting_card_style: greetingCardStyle
         },
         items: cart.map(i => ({
           product_id: i.product_id,
@@ -226,15 +272,40 @@ export default function App() {
   };
 
   // Custom cake builder request submission
-  const handleCustomCakeSubmit = (e: React.FormEvent) => {
+  const handleCustomCakeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setCakeInquirySuccess('');
     
-    // Simply mocked success for wedding/custom cake inquiries
-    setCakeInquirySuccess(`Dopyt ohľadom vašej ${cakeOccasion === 'WEDDING' ? 'Svadobnej' : 'Slávnostnej'} torty s kapacitou ${cakeServings} porcií bol zaznamenaný do databázy! Náš šéfcukrár František Olajos vás bude kontaktovať na e-mail: ${customerEmail} s vypracovanou cenovou ponukou do 24 hodín.`);
-    // Reset inputs
-    setCakeFlavor('');
-    setCakeDesc('');
+    try {
+      const payload = {
+        occasion: cakeOccasion,
+        serving_count: parseInt(cakeServings) || 12,
+        cake_shape: cakeShape,
+        flavor_profile: cakeFlavor,
+        allergies_sk: cakeAllergies,
+        visual_description: cakeDesc,
+        guest_name: customerName || 'Vzácny Hosť',
+        guest_phone: customerPhone || '901234567',
+        guest_email: customerEmail || 'guest@gmail.com',
+        budget_range: cakeServings === '50' ? '150-250 EUR' : cakeServings === '25' ? '90-130 EUR' : '60-80 EUR',
+        delivery_type: 'PICKUP'
+      };
+
+      const res = await api.request('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      setCakeInquirySuccess(`Požiadavka na tortu na mieru (${res.inquiry_number}) bola úspešne uložená do databázy! Váš dopyt s parametrami (${cakeOccasion === 'WEDDING' ? 'Svadobný catering' : 'Slávnostná oslava'}, ${cakeServings} porcií) bol priradený šéfcukrárovi Františkovi Olajosovi. Návrh ponuky prepošleme na ${customerEmail}.`);
+      
+      // Reset inputs
+      setCakeFlavor('');
+      setCakeDesc('');
+      setCakeAllergies('');
+    } catch (err: any) {
+      alert(err.message || 'Chyba odosielania dopytu');
+    }
   };
 
   // Filtered Catalogue products list
@@ -243,7 +314,10 @@ export default function App() {
     const matchesGluten = !onlyGlutenFree || p.is_gluten_free;
     const matchesLactose = !onlyLactoseFree || p.is_lactose_free;
     const matchesSugar = !onlySugarFree || p.is_sugar_free;
-    return matchesCat && matchesGluten && matchesLactose && matchesSugar;
+    const matchesText = !searchQuery || 
+      p.name_sk.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (p.short_desc_sk && p.short_desc_sk.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchesCat && matchesGluten && matchesLactose && matchesSugar && matchesText;
   });
 
   return (
@@ -351,7 +425,7 @@ export default function App() {
             <div className="flex items-center gap-2">
               <div className="hidden md:block text-right">
                 <span className="text-stone-700 font-medium text-xs block leading-tight">{currentUser.first_name} {currentUser.last_name}</span>
-                <span className="text-[10px] text-amber-800 font-bold uppercase tracking-wider block">Vernostné body: {currentUser.id === 'usr_customer_demo' ? 150 : 0} bodov</span>
+                <span className="text-[10px] text-amber-800 font-bold uppercase tracking-wider block">Vernostné body: {loyaltyPoints} bodov</span>
               </div>
               <button 
                 id="user-logout"
@@ -427,14 +501,38 @@ export default function App() {
 
             {/* Catalogue search and active filters */}
             <div id="catalogue-grids" className="space-y-6">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-stone-200 pb-4">
-                <div>
-                  <h3 className="font-serif text-2xl text-amber-950">Sezónna denná ponuka</h3>
-                  <p className="text-stone-500 text-xs">Užite si sladký deň s našimi poctivými makrónkami a francúzskymi eclairmi.</p>
+              <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 border-b border-stone-200 pb-4">
+                <div className="space-y-3 w-full xl:w-auto">
+                  <div>
+                    <h3 className="font-serif text-2xl text-amber-950">Sezónna denná ponuka</h3>
+                    <p className="text-stone-500 text-xs">Užite si sladký deň s našimi poctivými makrónkami a francúzskymi eclairmi.</p>
+                  </div>
+                  
+                  {/* Premium search bar */}
+                  <div className="relative max-w-sm w-full">
+                    <input
+                      type="text"
+                      placeholder="Hľadať v ponuke (napr. pistácia, karamel, pagáč)..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full px-3 py-1.5 pl-8 text-xs border border-stone-300 rounded-lg bg-white text-stone-900 outline-none focus:ring-1 focus:ring-amber-800 focus:border-amber-800 placeholder-stone-400"
+                    />
+                    <svg className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-stone-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    {searchQuery && (
+                      <button 
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-2 text-stone-400 hover:text-stone-700 text-xs font-bold leading-none top-2.5"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Dietary Filter Checkboxes */}
-                <div className="flex flex-wrap gap-4 text-xs font-medium text-stone-700 bg-stone-100 p-2.5 rounded-xl border border-stone-200">
+                <div className="flex flex-wrap gap-4 text-xs font-medium text-stone-700 bg-stone-100 p-2.5 rounded-xl border border-stone-200 w-full xl:w-auto">
                   <span className="text-stone-400 self-center mr-1">Diéty / Alergény:</span>
                   <label className="flex items-center gap-1.5 cursor-pointer">
                     <input type="checkbox" checked={onlyGlutenFree} onChange={(e) => setOnlyGlutenFree(e.target.checked)} className="rounded text-amber-800" />
@@ -673,6 +771,46 @@ export default function App() {
                   <input type="file" disabled title="Simulator" className="mx-auto text-[10px] max-w-[200px]" />
                 </div>
 
+                {/* Contact information for the inquiry */}
+                <div className="bg-stone-50 p-4 rounded-xl border border-stone-200/60 space-y-3">
+                  <span className="font-serif font-bold text-stone-900 text-xs block">Kontaktné údaje pre zaslanie cenovej ponuky:</span>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                    <div>
+                      <label className="text-[10px] text-stone-500 block font-medium">Meno a priezvisko:</label>
+                      <input 
+                        type="text" 
+                        required 
+                        value={customerName} 
+                        onChange={(e) => setCustomerName(e.target.value)} 
+                        placeholder="napr. Mária Olajosová" 
+                        className="w-full p-2 border border-stone-300 rounded text-stone-900 bg-white text-[11px]" 
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-stone-500 block font-medium">Váš e-mail:</label>
+                      <input 
+                        type="email" 
+                        required 
+                        value={customerEmail} 
+                        onChange={(e) => setCustomerEmail(e.target.value)} 
+                        placeholder="napr. maria@gmail.com" 
+                        className="w-full p-2 border border-stone-300 rounded text-stone-900 bg-white text-[11px]" 
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-stone-500 block font-medium">Telefón:</label>
+                      <input 
+                        type="tel" 
+                        required 
+                        value={customerPhone} 
+                        onChange={(e) => setCustomerPhone(e.target.value)} 
+                        placeholder="napr. +421 901 000 111" 
+                        className="w-full p-2 border border-stone-300 rounded text-stone-900 bg-white text-[11px]" 
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <button 
                   type="submit"
                   className="w-full py-3 bg-amber-955 hover:bg-amber-950 text-amber-50 font-serif font-semibold text-xs rounded-xl shadow-md transition"
@@ -828,23 +966,158 @@ export default function App() {
                         <input type="text" placeholder="Ulica, súpisné číslo, mesto..." required value={streetAddress} onChange={(e) => setStreetAddress(e.target.value)} className="w-full p-2 border rounded text-stone-950 bg-white" />
                       )}
 
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-[10px] text-stone-500 block">Deň doručenia:</label>
-                          <input type="date" required value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} className="p-1.5 w-full border rounded text-stone-950 bg-white" />
-                        </div>
-                        <div>
-                          <label className="text-[10px] text-stone-500 block">Časové okno:</label>
-                          <select value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className="p-1.5 w-full border rounded text-stone-950 bg-white">
-                            <option value="10:00 - 12:00">Dopoludnia (10:00 - 12:00)</option>
-                            <option value="12:00 - 14:00">Okolo obeda (12:00 - 14:00)</option>
-                            <option value="14:00 - 16:00">Popoludní (14:00 - 16:00)</option>
-                            <option value="16:00 - 18:00">Podvečer (16:00 - 18:00)</option>
-                          </select>
-                        </div>
-                      </div>
+                      {/* Dynamic Lead Hour Validation */}
+                      {(() => {
+                        const maxMinLead = cart.reduce((max, item) => {
+                          const matchedProduct = products.find(p => p.id === item.product_id);
+                          return Math.max(max, matchedProduct?.min_lead_hours || 0);
+                        }, 0);
+
+                        const getMinDateString = () => {
+                          const minDay = new Date();
+                          if (maxMinLead > 0) {
+                            minDay.setHours(minDay.getHours() + maxMinLead);
+                          }
+                          const yr = minDay.getFullYear();
+                          const mo = String(minDay.getMonth() + 1).padStart(2, '0');
+                          const dy = String(minDay.getDate()).padStart(2, '0');
+                          return `${yr}-${mo}-${dy}`;
+                        };
+
+                        return (
+                          <div className="space-y-2">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-[10px] text-stone-500 block">Deň doručenia:</label>
+                                <input 
+                                  type="date" 
+                                  required 
+                                  min={getMinDateString()}
+                                  value={scheduledDate} 
+                                  onChange={(e) => setScheduledDate(e.target.value)} 
+                                  className="p-1.5 w-full border rounded text-stone-950 bg-white cursor-pointer" 
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] text-stone-500 block">Časové okno:</label>
+                                <select value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className="p-1.5 w-full border rounded text-stone-950 bg-white">
+                                  <option value="10:00 - 12:00">Dopoludnia (10:00 - 12:00)</option>
+                                  <option value="12:00 - 14:00">Okolo obeda (12:00 - 14:00)</option>
+                                  <option value="14:00 - 16:00">Popoludní (14:00 - 16:00)</option>
+                                  <option value="16:00 - 18:00">Podvečer (16:00 - 18:00)</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            {maxMinLead > 0 && (
+                              <div className="p-2 bg-amber-50 rounded border border-amber-200 text-[10px] text-amber-900 leading-tight">
+                                ⚠️ Vybrané produkty v košíku vyžadujú aspoň <strong>{maxMinLead} hodín</strong> na predbežnú poctivú prípravu. Dátum bol automaticky obmedzený.
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       <textarea placeholder="Osobitné inštrukcie pre zvonček, poschodie alebo chladenie..." value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} className="w-full p-2 border rounded text-stone-900 bg-white h-12" />
+                    </div>
+
+                    {/* Premium Options Panel */}
+                    <span className="font-serif font-bold text-stone-900 text-sm block pt-3">3. Prémiové doplnky & Vernostný program:</span>
+                    
+                    <div className="space-y-2.5 p-3.5 bg-amber-50/40 rounded-xl border border-amber-200/60 shadow-xs">
+                      {/* Loyalty program option */}
+                      {currentUser ? (
+                        <div className="space-y-1 pb-2 border-b border-stone-250">
+                          <label className="flex items-start gap-2 cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={useLoyaltyPoints} 
+                              disabled={loyaltyPoints === 0}
+                              onChange={(e) => setUseLoyaltyPoints(e.target.checked)} 
+                              className="rounded text-amber-800 focus:ring-amber-800 mt-0.5" 
+                            />
+                            <div>
+                              <span className="font-serif text-xs font-bold text-stone-900 block">Uplatniť vernostné body</span>
+                              <span className="text-[10px] text-stone-500 block leading-tight">
+                                Na účte máte <strong className="text-amber-950 font-bold">{loyaltyPoints} bodov</strong>. 
+                                {loyaltyPoints > 0 ? (
+                                  <> Získate zľavu <strong className="text-green-800 font-bold">-{Math.min(loyaltyPoints * 0.05, itemsSubtotal * 0.5).toFixed(2)} EUR</strong> (max 50% ceny objednávky).</>
+                                ) : (
+                                  <> Každým poctivým nákupom zbierate body pre zľavy.</>
+                                )}
+                              </span>
+                            </div>
+                          </label>
+                        </div>
+                      ) : (
+                        <div className="pb-2 border-b border-stone-250 text-[10px] text-stone-500 italic">
+                          💡 <span className="underline cursor-pointer text-amber-850 font-semibold" onClick={() => setIsAuthOpen(true)}>Prihláste sa</span> pre uplatnenie vernostných bodov a zliav z nákupov!
+                        </div>
+                      )}
+
+                      {/* Gift wrapping option */}
+                      <div className="space-y-1 pb-2 border-b border-stone-250">
+                        <label className="flex items-start gap-2 cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={giftWrapping} 
+                            onChange={(e) => setGiftWrapping(e.target.checked)} 
+                            className="rounded text-amber-800 focus:ring-amber-800 mt-0.5" 
+                          />
+                          <div>
+                            <span className="font-serif text-xs font-bold text-stone-900 flex items-center gap-1.5">
+                              🎁 Darčekové balenie s mašľou <span className="text-green-800 bg-green-50 px-1.5 py-0.2 rounded font-black text-[9px]">+2.50 EUR</span>
+                            </span>
+                            <span className="text-[10px] text-stone-500 block leading-tight">Zabalíme vaše dezerty do exkluzívnej pevnej krabice previazanej luxusnou stuhou.</span>
+                          </div>
+                        </label>
+                      </div>
+
+                      {/* Personalised greeting card option */}
+                      <div className="space-y-2">
+                        <label className="flex items-start gap-2 cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={greetingCard} 
+                            onChange={(e) => setGreetingCard(e.target.checked)} 
+                            className="rounded text-amber-800 focus:ring-amber-800 mt-0.5" 
+                          />
+                          <div>
+                            <span className="font-serif text-xs font-bold text-stone-900 flex items-center gap-1.5">
+                              ✉️ Ručne vypísané prianie k sviatku <span className="text-green-800 bg-green-50 px-1.5 py-0.2 rounded font-black text-[9px]">+1.50 EUR</span>
+                            </span>
+                            <span className="text-[10px] text-stone-500 block leading-tight">Pridáme ozdobné blahoželanie s ručne napísaným textom podľa vašich predstáv.</span>
+                          </div>
+                        </label>
+
+                        {greetingCard && (
+                          <div className="pl-6 space-y-2 animate-fade-in">
+                            <div>
+                              <label className="text-[9px] text-stone-500 block">Vzhľad lístka / motív:</label>
+                              <select 
+                                value={greetingCardStyle} 
+                                onChange={(e) => setGreetingCardStyle(e.target.value)} 
+                                className="w-full p-1 border border-stone-300 rounded bg-white text-stone-900 text-xs"
+                              >
+                                <option value="elegance-gold">Zlatá elegancia (Pre slávnosti & jubileá)</option>
+                                <option value="rustic-sweet">Rustikálny / Sladký (Pre narodeniny)</option>
+                                <option value="flower-love">Rozkvitnutá lúka (Z lásky / Pre mamičky)</option>
+                                <option value="minimalist-white">Čistý minimalizmus (S voskovou pečaťou)</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-[9px] text-stone-500 block">Text odkazu (Napíšte čitateľne):</label>
+                              <textarea 
+                                placeholder="Zadajte text blahoželania (napr. Všetko len to najlepšie k jubileu želá rodina Olajos!)..." 
+                                required={greetingCard}
+                                value={greetingCardText} 
+                                onChange={(e) => setGreetingCardText(e.target.value)} 
+                                className="w-full p-1.5 border rounded text-stone-900 bg-white h-12 text-xs" 
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="pt-2">
@@ -863,19 +1136,61 @@ export default function App() {
 
             {/* Price breakdown billing footer */}
             {cart.length > 0 && (
-              <div className="p-5 border-t border-stone-200 bg-stone-100 text-xs text-stone-850 space-y-2 select-none">
-                <div className="flex justify-between">
-                  <span>Hodnota dezertov:</span>
-                  <span className="font-semibold">{itemsSubtotal.toFixed(2)} EUR</span>
-                </div>
+              <div className="p-5 border-t border-stone-200 bg-stone-100 text-xs text-stone-850 space-y-3.5 select-none animate-fade-in">
+                {/* Dynamically calculated progress bar for free delivery */}
                 {deliveryType === 'DELIVERY' && (
-                  <div className="flex justify-between">
-                    <span>Cena rozvozu ({selectedZoneConfig.name}):</span>
-                    <span>{deliveryCost === 0 ? 'ZADARMO' : `${deliveryCost.toFixed(2)} EUR`}</span>
+                  <div className="space-y-1.5 bg-white p-3 rounded-lg border border-stone-200 shadow-xs">
+                    {itemsSubtotal >= selectedZoneConfig.freeThreshold ? (
+                      <div className="text-green-800 font-bold flex items-center gap-1.5 text-[11px]">
+                        <span>🎉</span>
+                        <span>Máte nárok na doručenie <strong>ZADARMO!</strong> Ušetrili ste {selectedZoneConfig.price.toFixed(2)} EUR.</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        <div className="text-stone-700 text-[10.5px]">
+                          Pridajte ešte <strong className="text-amber-950">{(selectedZoneConfig.freeThreshold - itemsSubtotal).toFixed(2)} EUR</strong> a doručenie do <strong>zóny {selectedZoneConfig.name}</strong> máte <span className="bg-amber-100 text-amber-950 px-1 py-0.5 rounded font-black text-[9px] tracking-wide uppercase">Zdarma</span>!
+                        </div>
+                        <div className="w-full bg-stone-200 h-1.5 rounded-full overflow-hidden">
+                          <div 
+                            className="bg-amber-700 h-1.5 rounded-full transition-all duration-300"
+                            style={{ width: `${Math.min(100, (itemsSubtotal / selectedZoneConfig.freeThreshold) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
-                <div className="flex justify-between text-base font-serif font-bold text-stone-950 border-t border-stone-250 pt-2">
-                  <span>Celková cena s dph:</span>
+
+                <div className="flex justify-between text-stone-700">
+                  <span>Hodnota dezertov:</span>
+                  <span className="font-semibold text-stone-900">{itemsSubtotal.toFixed(2)} EUR</span>
+                </div>
+                {deliveryType === 'DELIVERY' && (
+                  <div className="flex justify-between text-stone-700">
+                    <span>Cena rozvozu ({selectedZoneConfig.name}):</span>
+                    <span className="font-semibold text-stone-900">{deliveryCost === 0 ? 'ZADARMO' : `${deliveryCost.toFixed(2)} EUR`}</span>
+                  </div>
+                )}
+                {giftWrapping && (
+                  <div className="flex justify-between text-stone-700">
+                    <span>🎁 Darčekové balenie s mašľou:</span>
+                    <span className="font-semibold text-stone-900">2.50 EUR</span>
+                  </div>
+                )}
+                {greetingCard && (
+                  <div className="flex justify-between text-stone-700">
+                    <span>✉️ Ručne vypísané blahoželanie:</span>
+                    <span className="font-semibold text-stone-900">1.50 EUR</span>
+                  </div>
+                )}
+                {useLoyaltyPoints && loyaltyDiscount > 0 && (
+                  <div className="flex justify-between text-green-800 font-medium">
+                    <span>✨ Zľava za vernostné body:</span>
+                    <span className="font-semibold">-{loyaltyDiscount.toFixed(2)} EUR</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-base font-serif font-bold text-stone-950 border-t border-stone-250 pt-2 pb-0.5">
+                  <span>Celková cena s DPH:</span>
                   <span>{orderTotal.toFixed(2)} EUR</span>
                 </div>
               </div>

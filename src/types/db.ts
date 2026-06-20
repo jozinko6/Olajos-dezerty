@@ -197,6 +197,10 @@ export interface Order {
   delivery_address_id?: string;
   invoice_address_id?: string;
   promo_code_id?: string;
+  gift_wrapped?: boolean;
+  greeting_card?: boolean;
+  greeting_card_text?: string;
+  greeting_card_style?: string;
   created_at: string;
   updated_at: string;
 }

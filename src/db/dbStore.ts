@@ -190,12 +190,14 @@ export const INITIAL_STATE: DatabaseState = {
     { id: 'bh_6', branch_id: 'br_hlohovec', day_of_week: 6, open_time: '09:00', close_time: '18:00', is_closed: false }
   ],
   productCategories: [
-    { id: 'cat_french', slug: 'francuzske-dezerty', name_sk: 'Francúzske dezerty', description_sk: 'Moderné a odľahčené dezerty podľa originálnych receptúr.', display_order: 1, is_active: true },
-    { id: 'cat_classics', slug: 'klasicke-zakusky', name_sk: 'Klasické zákusky', description_sk: 'Tradičné zákusky pripravované poctivo z najlepších surovín.', display_order: 2, is_active: true },
-    { id: 'cat_cakes', slug: 'torty', name_sk: 'Torty', description_sk: 'Oslávte narodeniny alebo sviatky s našimi dizajnovými tortami.', display_order: 3, is_active: true },
-    { id: 'cat_icecream', slug: 'zmrzlina', name_sk: 'Surová zmrzlina & Poháre', description_sk: 'Poctivá remeselná zmrzlina a lahodné dezertné poháre.', display_order: 4, is_active: true },
-    { id: 'cat_pastry', slug: 'briose-a-pecivo', name_sk: 'Kysnuté pečivo & Croissanty', description_sk: 'Čerstvo pečené maslové pečivo z našej pece.', display_order: 5, is_active: true },
-    { id: 'cat_gifts', slug: 'darcekove-balenia', name_sk: 'Darčekové balenia & Maškrty', description_sk: 'Exkluzívne čokolády, makrónky a darčekové sety.', display_order: 6, is_active: true }
+    { id: 'cat_french', slug: 'francuzske-dezerty', name_sk: 'Zákusky - Francúzske', description_sk: 'Moderné a odľahčené francúzske zákusky podľa originálnych receptúr.', display_order: 1, is_active: true },
+    { id: 'cat_classics', slug: 'klasicke-zakusky', name_sk: 'Zákusky - Klasické', description_sk: 'Tradičné slovenské zákusky pripravované poctivo z najlepších surovín.', display_order: 2, is_active: true },
+    { id: 'cat_cakes', slug: 'torty', name_sk: 'Torty Premium', description_sk: 'Oslávte výnimočné dni s našimi prémiovými dizajnovými tortami.', display_order: 3, is_active: true },
+    { id: 'cat_icecream', slug: 'zmrzlina', name_sk: 'Remeselná zmrzlina', description_sk: 'Poctivá domáca zmrzlina a lahodné dezertné poháre.', display_order: 4, is_active: true },
+    { id: 'cat_salty', slug: 'slane-pecivo', name_sk: 'Slané dobroty & Pagáče', description_sk: 'Tradičné slané pečivo, tyčinky a čerstvo pečené škvarkové pagáče.', display_order: 5, is_active: true },
+    { id: 'cat_drinks', slug: 'kava-a-limonady', name_sk: 'Káva & Limonády', description_sk: 'Čerstvo pražená výberová káva a osviežujúce domáce limonády.', display_order: 6, is_active: true },
+    { id: 'cat_pastry', slug: 'briose-a-pecivo', name_sk: 'Kysnuté pečivo & Croissanty', description_sk: 'Čerstvo pečené maslové pečivo z našej pece.', display_order: 7, is_active: true },
+    { id: 'cat_gifts', slug: 'darcekove-balenia', name_sk: 'Darčeky & Makrónky', description_sk: 'Exkluzívne darčekové balenia, bonboniéry a makrónky.', display_order: 8, is_active: true }
   ],
   products: [
     {
@@ -265,6 +267,50 @@ export const INITIAL_STATE: DatabaseState = {
       created_at: '2026-06-20T06:30:00Z'
     },
     {
+      id: 'p_puncovy_rez',
+      category_id: 'cat_classics',
+      slug: 'tradicny-puncovy-rez',
+      name_sk: 'Šťavnatý Punčový Rez s rumom',
+      short_desc_sk: 'Poctivý tradičný domáci zákusok s vôňou tuzemského rumu a marhuľového džemu.',
+      long_desc_sk: 'Tradičný svieži a dokonale nasiaknutý punčový rez s reálnym sirupom s pridaním tuzemského rumu, natretý ríbezľovým a marhuľovým džemom a zaliaty sladkým punčovým fondánom.',
+      base_price: 2.80,
+      unit: 'ks',
+      weight_g: 100,
+      pieces_per_pack: 1,
+      shelf_life_days: 3,
+      storage_temp_sk: 'Skladujte pri teplote 2-6 °C',
+      is_gluten_free: false,
+      is_lactose_free: false,
+      is_sugar_free: false,
+      delivery_allowed: true,
+      pickup_allowed: true,
+      min_lead_hours: 12,
+      is_active: true,
+      created_at: '2026-06-20T06:30:00Z'
+    },
+    {
+      id: 'p_laskonka',
+      category_id: 'cat_classics',
+      slug: 'kokosovo-karamelova-laskonka',
+      name_sk: 'Kokosovo-karamelová Laskonka',
+      short_desc_sk: 'Krehký kokosový bielkový korpus s lahodným karamelovo-orechovým krémom.',
+      long_desc_sk: 'Prirodzene bezlepkový tradičný slovenský zákusok. Dve nadýchané, krehké kokosové pusinky z bielkového snehu plnené poctivým maslovým karamelovým krémom a posypané chrumkavými vlašskými orechmi.',
+      base_price: 2.40,
+      unit: 'ks',
+      weight_g: 60,
+      pieces_per_pack: 1,
+      shelf_life_days: 4,
+      storage_temp_sk: 'Skladujte pri teplote 2-6 °C',
+      is_gluten_free: true,
+      is_lactose_free: false,
+      is_sugar_free: false,
+      delivery_allowed: true,
+      pickup_allowed: true,
+      min_lead_hours: 12,
+      is_active: true,
+      created_at: '2026-06-20T06:30:00Z'
+    },
+    {
       id: 'p_torta_coko',
       category_id: 'cat_cakes',
       slug: 'cokoladovo-malinova-torta',
@@ -283,6 +329,72 @@ export const INITIAL_STATE: DatabaseState = {
       delivery_allowed: true,
       pickup_allowed: true,
       min_lead_hours: 48,
+      is_active: true,
+      created_at: '2026-06-20T06:30:00Z'
+    },
+    {
+      id: 'p_torta_karamel',
+      category_id: 'cat_cakes',
+      slug: 'torta-slany-karamel',
+      name_sk: 'Slaný Karamel Torta Premium',
+      short_desc_sk: 'Luxusná korpusová torta s mliečnym krémom a tekutým stredom zo slaného karamelu.',
+      long_desc_sk: 'Naša najpredávanejšia dizajnová torta zo špeciálneho karamelového piškótového korpusu, plnená vyšľahaným mascarpone krémom s maslovým slaným karamelom a tekutým prelivom z pravej morskej soli Fleur de Sel. Zdobená domáce makrónkami a karamelkami.',
+      base_price: 36.00,
+      unit: 'ks',
+      weight_g: 1350,
+      pieces_per_pack: 1,
+      shelf_life_days: 3,
+      storage_temp_sk: 'Skladujte pri teplote 2-6 °C',
+      is_gluten_free: false,
+      is_lactose_free: false,
+      is_sugar_free: false,
+      delivery_allowed: true,
+      pickup_allowed: true,
+      min_lead_hours: 48,
+      is_active: true,
+      created_at: '2026-06-20T06:30:00Z'
+    },
+    {
+      id: 'p_torta_pavlova',
+      category_id: 'cat_cakes',
+      slug: 'pavlova-torta-ovocna',
+      name_sk: 'Tradičná Pavlova Torta s lesným ovocím',
+      short_desc_sk: 'Snehovo biela, zvonku krehká a vnútri vláčna torta s ovocím a mascarpone krémom.',
+      long_desc_sk: 'Autentická Pavlova torta pečená z poctivých vaječných bielkov s kryštálovým cukrom pre dokonale krehký vonkajšok a penový marshmallow stred. Plnená sviežim krémom z mascarpone, pravej vanilky a lesného ovocía (jahody, maliny, čučoriedky) a voňavej čerstvej mäty.',
+      base_price: 34.00,
+      unit: 'ks',
+      weight_g: 1100,
+      pieces_per_pack: 1,
+      shelf_life_days: 2,
+      storage_temp_sk: 'Skladujte pri teplote 2-6 °C',
+      is_gluten_free: true,
+      is_lactose_free: false,
+      is_sugar_free: false,
+      delivery_allowed: true,
+      pickup_allowed: true,
+      min_lead_hours: 48,
+      is_active: true,
+      created_at: '2026-06-20T06:30:00Z'
+    },
+    {
+      id: 'p_cheesecake_pistachio',
+      category_id: 'cat_cakes',
+      slug: 'pistaciovy-cheesecake',
+      name_sk: 'Pistáciový Premium Cheesecake',
+      short_desc_sk: 'Nezameniteľný krémový pečený cheesecake zo 100% pasty zo sicílskych pistácií.',
+      long_desc_sk: 'Bohatý, pomaly pečený cheesecake zo smotanového syra (Cream cheese) infused s čistou nesladenou pastou zo sicílskych pistácií (Bronte DOP), uložený na krehkom maslovom špaldovom sušienkovom ceste, poliaty pistáciovým maslom a bohato posypaný drvenými praženými pistáciami.',
+      base_price: 32.00,
+      unit: 'ks',
+      weight_g: 1250,
+      pieces_per_pack: 1,
+      shelf_life_days: 3,
+      storage_temp_sk: 'Skladujte pri teplote 2-6 °C',
+      is_gluten_free: false,
+      is_lactose_free: false,
+      is_sugar_free: false,
+      delivery_allowed: true,
+      pickup_allowed: true,
+      min_lead_hours: 24,
       is_active: true,
       created_at: '2026-06-20T06:30:00Z'
     },
@@ -329,6 +441,182 @@ export const INITIAL_STATE: DatabaseState = {
       min_lead_hours: 12,
       is_active: true,
       created_at: '2026-06-20T06:30:00Z'
+    },
+    {
+      id: 'p_icecream_pistachio',
+      category_id: 'cat_icecream',
+      slug: 'remeselna-zmrzlina-pistacia-sicilia',
+      name_sk: 'Remeselná zmrzlina Sicílska Pistácia (500ml)',
+      short_desc_sk: 'Poctivá remeselná zmrzlina z pravej pasty zo sicílskych pistácií.',
+      long_desc_sk: 'Hustá, krémová remeselná zmrzlina vyrábaná v malých dávkach metódou pomalého miešania z čerstvého mlieka, jemnej smotany a 100% pasty zo slávnych sicílskych pistácií (Bronte DOP). Bez pridania umelých farbív či stabilizátorov, zabalená v termoboxe.',
+      base_price: 8.90,
+      unit: 'box',
+      weight_g: 350,
+      pieces_per_pack: 1,
+      shelf_life_days: 30,
+      storage_temp_sk: 'Skladujte pri teplote -18 °C a nižšej',
+      is_gluten_free: true,
+      is_lactose_free: false,
+      is_sugar_free: false,
+      delivery_allowed: true,
+      pickup_allowed: true,
+      min_lead_hours: 4,
+      is_active: true,
+      created_at: '2026-06-20T12:00:00Z'
+    },
+    {
+      id: 'p_icecream_chocolate',
+      category_id: 'cat_icecream',
+      slug: 'remeselna-zmrzlina-belgicka-cokolada',
+      name_sk: 'Remeselná zmrzlina Belgická Čokoláda (500ml)',
+      short_desc_sk: 'Intenzívna zmrzlina z najlepšej horkej belgickej čokolády Callebaut.',
+      long_desc_sk: 'Silná a intenzívna smotanová mliečna zmrzlina pripravená z 70% horkej belgickej čokolády Callebaut a prémiového holandského kakaa, premiešaná s chrumkavými hoblinkami čokolády. Balená v praktickom, uzatvárateľnom termoboxe.',
+      base_price: 7.90,
+      unit: 'box',
+      weight_g: 350,
+      pieces_per_pack: 1,
+      shelf_life_days: 30,
+      storage_temp_sk: 'Skladujte pri teplote -18 °C a nižšej',
+      is_gluten_free: true,
+      is_lactose_free: false,
+      is_sugar_free: false,
+      delivery_allowed: true,
+      pickup_allowed: true,
+      min_lead_hours: 4,
+      is_active: true,
+      created_at: '2026-06-20T12:00:00Z'
+    },
+    {
+      id: 'p_icecream_vanilla',
+      category_id: 'cat_icecream',
+      slug: 'remeselna-zmrzlina-madagaskarska-vanilka',
+      name_sk: 'Remeselná zmrzlina Madagaskarská Vanilka (500ml)',
+      short_desc_sk: 'Klasická plnotučná zmrzlina s semiačkami z pravých vanilkových strukov Bourbon.',
+      long_desc_sk: 'Dokonalá tradičná zmrzlina vyrobená zo žĺtkov, čerstvého plnotučného kravského mlieka a slovenskej smotany, prevoňaná semiačkami ručne vyškrabanými z pravých lúskov madagaskarskej vanilky z oblasti Bourbon. Balená v izolačnom termoboxe.',
+      base_price: 7.90,
+      unit: 'box',
+      weight_g: 350,
+      pieces_per_pack: 1,
+      shelf_life_days: 30,
+      storage_temp_sk: 'Skladujte pri teplote -18 °C a nižšej',
+      is_gluten_free: true,
+      is_lactose_free: false,
+      is_sugar_free: false,
+      delivery_allowed: true,
+      pickup_allowed: true,
+      min_lead_hours: 4,
+      is_active: true,
+      created_at: '2026-06-20T12:00:00Z'
+    },
+    {
+      id: 'p_icecream_mango',
+      category_id: 'cat_icecream',
+      slug: 'remeselna-zmrzlina-mangovy-sorbet',
+      name_sk: 'Remeselná zmrzlina Mangový Sorbet (500ml)',
+      short_desc_sk: '100% vegánsky bezlaktózový sorbet s podielom 65% zrelého manga Alfonso.',
+      long_desc_sk: 'Exotický, vysoko osviežujúci sorbet s extrémne plnou a šťavnatou chuťou indického manga Alfonso (vyše 65% ovocného podielu) bez pridania mliečnej zložky, tuku a lepku. Ideálna zdravá alternatíva, 100% vegánska. Balená v termoboxe.',
+      base_price: 7.50,
+      unit: 'box',
+      weight_g: 350,
+      pieces_per_pack: 1,
+      shelf_life_days: 30,
+      storage_temp_sk: 'Skladujte pri teplote -18 °C a nižšej',
+      is_gluten_free: true,
+      is_lactose_free: true,
+      is_sugar_free: false,
+      delivery_allowed: true,
+      pickup_allowed: true,
+      min_lead_hours: 4,
+      is_active: true,
+      created_at: '2026-06-20T12:00:00Z'
+    },
+    {
+      id: 'p_pagace',
+      category_id: 'cat_salty',
+      slug: 'skvarkove-pagace',
+      name_sk: 'Domáce škvarkové pagáče (balenie 5ks)',
+      short_desc_sk: 'Tradičné, mnohonásobne prekladané oškvarkové pagáče s bohatou vôňou.',
+      long_desc_sk: 'Čerstvo upečené bravčové škvarkové pagáče podľa receptu babičky Olajos. Ručne prekladané a lístkujúce sa cesto s kvalitnou masťou a chrumkavou kôrkou s rascou a hrubozrnnou soľou.',
+      base_price: 4.80,
+      unit: 'pack',
+      weight_g: 250,
+      pieces_per_pack: 5,
+      shelf_life_days: 3,
+      storage_temp_sk: 'Skladujte v suchu pri teplote do 22 °C',
+      is_gluten_free: false,
+      is_lactose_free: true,
+      is_sugar_free: true,
+      delivery_allowed: true,
+      pickup_allowed: true,
+      min_lead_hours: 12,
+      is_active: true,
+      created_at: '2026-06-20T12:00:00Z'
+    },
+    {
+      id: 'p_tycinky',
+      category_id: 'cat_salty',
+      slug: 'syrove-tycinky',
+      name_sk: 'Krehké maslové syrové tyčinky (150g)',
+      short_desc_sk: 'Maslové tyčinky s bohatou porciou údeného syra a červenej papriky.',
+      long_desc_sk: 'Elegantné slané slávnostné tyčinky z pravého masla, obalené v strúhanom slovenskom údenom syre eidam a posypané sezamovými semienkami. Krehké a mimoriadne návykové občerstvenie ku každému posedeniu.',
+      base_price: 3.90,
+      unit: 'pack',
+      weight_g: 150,
+      pieces_per_pack: 1,
+      shelf_life_days: 7,
+      storage_temp_sk: 'Skladujte v suchu pri teplote do 22 °C',
+      is_gluten_free: false,
+      is_lactose_free: false,
+      is_sugar_free: true,
+      delivery_allowed: true,
+      pickup_allowed: true,
+      min_lead_hours: 4,
+      is_active: true,
+      created_at: '2026-06-20T12:00:00Z'
+    },
+    {
+      id: 'p_limonada',
+      category_id: 'cat_drinks',
+      slug: 'domaca-limonada-baza',
+      name_sk: 'Bazovo-mätová limonáda (1L)',
+      short_desc_sk: 'Domáca limonáda z nášho bazového sirupu, s čerstvou mätou a limetkou.',
+      long_desc_sk: 'Lahodná a neobyčajne osviežujúca studená limonáda pripravená z ručne zberaného bazového sirupu z okolitých lesov Hlohovca. Doplnená čerstvo vylisovanou limetkovou šťavou, lístkami záhradnej mäty a pramenitou vodou.',
+      base_price: 3.50,
+      unit: 'ks',
+      weight_g: 1000,
+      pieces_per_pack: 1,
+      shelf_life_days: 1,
+      storage_temp_sk: 'Skladujte pri teplote 2-8 °C',
+      is_gluten_free: true,
+      is_lactose_free: true,
+      is_sugar_free: false,
+      delivery_allowed: true,
+      pickup_allowed: true,
+      min_lead_hours: 2,
+      is_active: true,
+      created_at: '2026-06-20T12:00:00Z'
+    },
+    {
+      id: 'p_coffee',
+      category_id: 'cat_drinks',
+      slug: 'zrnkova-kava-olajos',
+      name_sk: 'Výberová zrnková káva Olajos Blend (250g)',
+      short_desc_sk: 'Exkluzívna 100% Arabica, stredne pražená s tónmi lieskovcov a tmavej čokolády.',
+      long_desc_sk: 'Naša vlastná exkluzívna kaviarenská zmes 100% Arabicy z Brazílie a Kolumbie rozvoniavajúca tónmi kešu orechov, karamelu a horkej čokolády. Pražená lokálne pre zachovanie plnosti a hodvábnej cremy. Ideálna k našim sladkým tortám.',
+      base_price: 8.90,
+      unit: 'ks',
+      weight_g: 250,
+      pieces_per_pack: 1,
+      shelf_life_days: 180,
+      storage_temp_sk: 'Skladujte na suchom a tmavom mieste',
+      is_gluten_free: true,
+      is_lactose_free: true,
+      is_sugar_free: true,
+      delivery_allowed: true,
+      pickup_allowed: true,
+      min_lead_hours: 2,
+      is_active: true,
+      created_at: '2026-06-20T12:00:00Z'
     }
   ],
   productImages: [
@@ -337,19 +625,54 @@ export const INITIAL_STATE: DatabaseState = {
     { id: 'img_veternik', product_id: 'p_veternik', image_url: 'https://images.unsplash.com/photo-1558961309-dbdf71799f5a?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Veterník' },
     { id: 'img_torta', product_id: 'p_torta_coko', image_url: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Čokoládová torte' },
     { id: 'img_macarons', product_id: 'p_macarons_gift', image_url: 'https://images.unsplash.com/photo-1569864358642-9d1684040f43?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Krabica makróniek' },
-    { id: 'img_pist_cup', product_id: 'p_pistachio_cup', image_url: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Pistáciový pohár' }
+    { id: 'img_pist_cup', product_id: 'p_pistachio_cup', image_url: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Pistáciový pohár' },
+    { id: 'img_punc_rez', product_id: 'p_puncovy_rez', image_url: 'https://images.unsplash.com/photo-1548365328-8c6db3220e4c?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Šťavnatý Punčový Rez' },
+    { id: 'img_laskonka', product_id: 'p_laskonka', image_url: 'https://images.unsplash.com/photo-1558961309-dbdf71799f5a?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Kokosová Laskonka' },
+    { id: 'img_torta_karamel', product_id: 'p_torta_karamel', image_url: 'https://images.unsplash.com/photo-1542826438-bd32f43d626f?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Slaný Karamel Torta Premium' },
+    { id: 'img_torta_pavlova', product_id: 'p_torta_pavlova', image_url: 'https://images.unsplash.com/photo-1511081692786-e7485a428cd6?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Pavlova Torta s ovocím' },
+    { id: 'img_cheese_pistachio', product_id: 'p_cheesecake_pistachio', image_url: 'https://images.unsplash.com/photo-1524351199679-46cddf530c04?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Pistáciový Premium Cheesecake' },
+    { id: 'img_ice_pist', product_id: 'p_icecream_pistachio', image_url: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Sicílska Pistácia' },
+    { id: 'img_ice_choc', product_id: 'p_icecream_chocolate', image_url: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Belgická Čokoláda Zmrzlina' },
+    { id: 'img_ice_van', product_id: 'p_icecream_vanilla', image_url: 'https://images.unsplash.com/photo-1570197788417-0e82375c9371?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Madagaskarská Vanilka Zmrzlina' },
+    { id: 'img_ice_mang', product_id: 'p_icecream_mango', image_url: 'https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Mangový Sorbet Vegánsky' },
+    { id: 'img_pagace', product_id: 'p_pagace', image_url: 'https://images.unsplash.com/photo-1541532715695-63a568d30e30?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Domáce škvarkové pagáče' },
+    { id: 'img_tycinky', product_id: 'p_tycinky', image_url: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Krehké maslové syrové tyčinky' },
+    { id: 'img_limonada', product_id: 'p_limonada', image_url: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Bazovo-mätová limonáda' },
+    { id: 'img_coffee', product_id: 'p_coffee', image_url: 'https://images.unsplash.com/photo-1507133750040-4a8f57021571?w=600&auto=format&fit=crop&q=80', is_primary: true, focal_point_x: 0.5, focal_point_y: 0.5, alt_text: 'Zrnková káva Olajos Blend' }
   ],
   productVariants: [
     { id: 'v_torta_8p', product_id: 'p_torta_coko', name_sk: 'Malá torta Ø 18cm (8-10 porcií)', price_modifier: 0.00, sku: 'T-COKO-M', is_active: true },
     { id: 'v_torta_14p', product_id: 'p_torta_coko', name_sk: 'Stredná torta Ø 24cm (14-16 porcií)', price_modifier: 12.00, sku: 'T-COKO-S', is_active: true },
-    { id: 'v_torta_22p', product_id: 'p_torta_coko', name_sk: 'Veľká torta Ø 30cm (22-26 porcií)', price_modifier: 24.00, sku: 'T-COKO-L', is_active: true }
+    { id: 'v_torta_22p', product_id: 'p_torta_coko', name_sk: 'Veľká torta Ø 30cm (22-26 porcií)', price_modifier: 24.00, sku: 'T-COKO-L', is_active: true },
+    
+    { id: 'v_torta_karamel_8p', product_id: 'p_torta_karamel', name_sk: 'Malá torta Ø 18cm (8-10 porcií)', price_modifier: 0.00, sku: 'T-KARA-M', is_active: true },
+    { id: 'v_torta_karamel_14p', product_id: 'p_torta_karamel', name_sk: 'Stredná torta Ø 24cm (14-16 porcií)', price_modifier: 12.00, sku: 'T-KARA-S', is_active: true },
+    { id: 'v_torta_karamel_22p', product_id: 'p_torta_karamel', name_sk: 'Veľká torta Ø 30cm (22-26 porcií)', price_modifier: 24.00, sku: 'T-KARA-L', is_active: true },
+    
+    { id: 'v_torta_pavlova_8p', product_id: 'p_torta_pavlova', name_sk: 'Malá torta Ø 18cm (8-10 porcií)', price_modifier: 0.00, sku: 'T-PAVL-M', is_active: true },
+    { id: 'v_torta_pavlova_14p', product_id: 'p_torta_pavlova', name_sk: 'Stredná torta Ø 24cm (14-16 porcií)', price_modifier: 10.00, sku: 'T-PAVL-S', is_active: true },
+    { id: 'v_torta_pavlova_22p', product_id: 'p_torta_pavlova', name_sk: 'Veľká torta Ø 30cm (22-26 porcií)', price_modifier: 20.00, sku: 'T-PAVL-L', is_active: true },
+    
+    { id: 'v_cheesecake_pist_12p', product_id: 'p_cheesecake_pistachio', name_sk: 'Celá torta Ø 24cm (12 porcií)', price_modifier: 0.00, sku: 'CH-PIST-W', is_active: true }
   ],
   productOptionGroups: [
-    { id: 'opg_torta', product_id: 'p_torta_coko', name_sk: 'Doplnky na tortu', min_selection: 0, max_selection: 1 }
+    { id: 'opg_torta', product_id: 'p_torta_coko', name_sk: 'Doplnky na tortu', min_selection: 0, max_selection: 1 },
+    { id: 'opg_torta_karamel', product_id: 'p_torta_karamel', name_sk: 'Doplnky na tortu', min_selection: 0, max_selection: 1 },
+    { id: 'opg_torta_pavlova', product_id: 'p_torta_pavlova', name_sk: 'Doplnky na tortu', min_selection: 0, max_selection: 1 },
+    { id: 'opg_cheesecake_pistachio', product_id: 'p_cheesecake_pistachio', name_sk: 'Doplnky na tortu', min_selection: 0, max_selection: 1 }
   ],
   productOptions: [
     { id: 'op_coko_text', group_id: 'opg_torta', name_sk: 'Custom čokoládový nápis na tortu (+20g)', price: 3.50, is_active: true },
-    { id: 'op_gold_sparkle', group_id: 'opg_torta', name_sk: 'Prskačky a sviečky premium (+3ks)', price: 1.50, is_active: true }
+    { id: 'op_gold_sparkle', group_id: 'opg_torta', name_sk: 'Prskačky a sviečky premium (+3ks)', price: 1.50, is_active: true },
+    
+    { id: 'op_coko_text_k', group_id: 'opg_torta_karamel', name_sk: 'Custom čokoládový nápis na tortu (+20g)', price: 3.50, is_active: true },
+    { id: 'op_gold_sparkle_k', group_id: 'opg_torta_karamel', name_sk: 'Prskačky a sviečky premium (+3ks)', price: 1.50, is_active: true },
+    
+    { id: 'op_coko_text_p', group_id: 'opg_torta_pavlova', name_sk: 'Custom čokoládový nápis na tortu (+20g)', price: 3.50, is_active: true },
+    { id: 'op_gold_sparkle_p', group_id: 'opg_torta_pavlova', name_sk: 'Prskačky a sviečky premium (+3ks)', price: 1.50, is_active: true },
+    
+    { id: 'op_coko_text_chp', group_id: 'opg_cheesecake_pistachio', name_sk: 'Custom čokoládový nápis na tortu (+20g)', price: 3.50, is_active: true },
+    { id: 'op_gold_sparkle_chp', group_id: 'opg_cheesecake_pistachio', name_sk: 'Prskačky a sviečky premium (+3ks)', price: 1.50, is_active: true }
   ],
   allergens: [
     { id: 1, code: '1', name_sk: 'Obilniny obsahujúce lepok' },
@@ -367,16 +690,36 @@ export const INITIAL_STATE: DatabaseState = {
     { product_id: 'p_veternik', allergen_id: 1 },
     { product_id: 'p_veternik', allergen_id: 3 },
     { product_id: 'p_veternik', allergen_id: 7 },
+    { product_id: 'p_puncovy_rez', allergen_id: 1 },
+    { product_id: 'p_puncovy_rez', allergen_id: 3 },
+    { product_id: 'p_laskonka', allergen_id: 3 },
+    { product_id: 'p_laskonka', allergen_id: 7 },
+    { product_id: 'p_laskonka', allergen_id: 8 },
     { product_id: 'p_torta_coko', allergen_id: 1 },
     { product_id: 'p_torta_coko', allergen_id: 3 },
     { product_id: 'p_torta_coko', allergen_id: 7 },
     { product_id: 'p_torta_coko', allergen_id: 8 },
+    { product_id: 'p_torta_karamel', allergen_id: 1 },
+    { product_id: 'p_torta_karamel', allergen_id: 3 },
+    { product_id: 'p_torta_karamel', allergen_id: 7 },
+    { product_id: 'p_torta_karamel', allergen_id: 8 },
+    { product_id: 'p_torta_pavlova', allergen_id: 3 },
+    { product_id: 'p_torta_pavlova', allergen_id: 7 },
+    { product_id: 'p_cheesecake_pistachio', allergen_id: 1 },
+    { product_id: 'p_cheesecake_pistachio', allergen_id: 3 },
+    { product_id: 'p_cheesecake_pistachio', allergen_id: 7 },
+    { product_id: 'p_cheesecake_pistachio', allergen_id: 8 },
     { product_id: 'p_macarons_gift', allergen_id: 3 },
     { product_id: 'p_macarons_gift', allergen_id: 7 },
     { product_id: 'p_macarons_gift', allergen_id: 8 },
     { product_id: 'p_pistachio_cup', allergen_id: 1 },
     { product_id: 'p_pistachio_cup', allergen_id: 7 },
-    { product_id: 'p_pistachio_cup', allergen_id: 8 }
+    { product_id: 'p_pistachio_cup', allergen_id: 8 },
+    { product_id: 'p_icecream_pistachio', allergen_id: 7 },
+    { product_id: 'p_icecream_pistachio', allergen_id: 8 },
+    { product_id: 'p_icecream_chocolate', allergen_id: 7 },
+    { product_id: 'p_icecream_vanilla', allergen_id: 3 },
+    { product_id: 'p_icecream_vanilla', allergen_id: 7 }
   ],
   collections: [
     { id: 'col_weekend', slug: 'vikendova-navsteva', name_sk: 'Víkendová návšteva', description_sk: 'Najobľúbenejšia ponuka pre perfektné víkendové posedenie v rodinnom kruhu.', is_active: true }
@@ -390,9 +733,22 @@ export const INITIAL_STATE: DatabaseState = {
     { id: 'inv_eclair', product_id: 'p_eclair', branch_id: 'br_hlohovec', quantity: 24, reserved_quantity: 0, min_stock_alert: 5 },
     { id: 'inv_tart', product_id: 'p_tart_raspberry', branch_id: 'br_hlohovec', quantity: 18, reserved_quantity: 0, min_stock_alert: 5 },
     { id: 'inv_veternik', product_id: 'p_veternik', branch_id: 'br_hlohovec', quantity: 0, reserved_quantity: 0, min_stock_alert: 5 }, // VÝPREDAJ TEST (0ks!)
+    { id: 'inv_punc_rez', product_id: 'p_puncovy_rez', branch_id: 'br_hlohovec', quantity: 25, reserved_quantity: 0, min_stock_alert: 5 },
+    { id: 'inv_laskonka', product_id: 'p_laskonka', branch_id: 'br_hlohovec', quantity: 30, reserved_quantity: 0, min_stock_alert: 5 },
     { id: 'inv_torta', product_id: 'p_torta_coko', branch_id: 'br_hlohovec', quantity: 5, reserved_quantity: 0, min_stock_alert: 2 },
+    { id: 'inv_torta_karamel', product_id: 'p_torta_karamel', branch_id: 'br_hlohovec', quantity: 4, reserved_quantity: 0, min_stock_alert: 2 },
+    { id: 'inv_torta_pavlova', product_id: 'p_torta_pavlova', branch_id: 'br_hlohovec', quantity: 3, reserved_quantity: 0, min_stock_alert: 2 },
+    { id: 'inv_cheese_pistachio', product_id: 'p_cheesecake_pistachio', branch_id: 'br_hlohovec', quantity: 6, reserved_quantity: 0, min_stock_alert: 2 },
     { id: 'inv_mac', product_id: 'p_macarons_gift', branch_id: 'br_hlohovec', quantity: 30, reserved_quantity: 0, min_stock_alert: 4 },
-    { id: 'inv_pist', product_id: 'p_pistachio_cup', branch_id: 'br_hlohovec', quantity: 12, reserved_quantity: 0, min_stock_alert: 3 }
+    { id: 'inv_pist', product_id: 'p_pistachio_cup', branch_id: 'br_hlohovec', quantity: 12, reserved_quantity: 0, min_stock_alert: 3 },
+    { id: 'inv_ice_pist', product_id: 'p_icecream_pistachio', branch_id: 'br_hlohovec', quantity: 15, reserved_quantity: 0, min_stock_alert: 3 },
+    { id: 'inv_ice_choc', product_id: 'p_icecream_chocolate', branch_id: 'br_hlohovec', quantity: 20, reserved_quantity: 0, min_stock_alert: 3 },
+    { id: 'inv_ice_van', product_id: 'p_icecream_vanilla', branch_id: 'br_hlohovec', quantity: 18, reserved_quantity: 0, min_stock_alert: 3 },
+    { id: 'inv_ice_mang', product_id: 'p_icecream_mango', branch_id: 'br_hlohovec', quantity: 12, reserved_quantity: 0, min_stock_alert: 3 },
+    { id: 'inv_pagace', product_id: 'p_pagace', branch_id: 'br_hlohovec', quantity: 35, reserved_quantity: 0, min_stock_alert: 5 },
+    { id: 'inv_tycinky', product_id: 'p_tycinky', branch_id: 'br_hlohovec', quantity: 40, reserved_quantity: 0, min_stock_alert: 5 },
+    { id: 'inv_limonada', product_id: 'p_limonada', branch_id: 'br_hlohovec', quantity: 15, reserved_quantity: 0, min_stock_alert: 3 },
+    { id: 'inv_coffee', product_id: 'p_coffee', branch_id: 'br_hlohovec', quantity: 25, reserved_quantity: 0, min_stock_alert: 4 }
   ],
   inventoryMovements: [],
   orders: [],
@@ -894,6 +1250,38 @@ export const db = {
         return dbState.cashSettlements.filter(cs => cs.courier_id === courierId);
       }
       return dbState.cashSettlements;
+    }
+  },
+
+  // INQUIRIES & DECORATING
+  inquiries: {
+    allCake: () => dbState.customCakeInquiries.sort((a,b) => b.created_at.localeCompare(a.created_at)),
+    createCake: (inquiry: Omit<CustomCakeInquiry, 'id' | 'inquiry_number' | 'status' | 'created_at'>) => {
+      const id = db.generateId('inq');
+      const count = dbState.customCakeInquiries.length + 1;
+      const inquiry_number = `TORTA-2026-${String(count).padStart(4, '0')}`;
+      const newInq: CustomCakeInquiry = {
+        ...inquiry,
+        id,
+        inquiry_number,
+        status: 'NEW',
+        created_at: new Date().toISOString()
+      };
+      dbState.customCakeInquiries.push(newInq);
+      db.save();
+      return newInq;
+    },
+    updateCake: (id: string, status: string, notes?: string, priceOffer?: number, convertedOrderId?: string) => {
+      const inq = dbState.customCakeInquiries.find(i => i.id === id);
+      if (inq) {
+        inq.status = status;
+        if (notes !== undefined) inq.manager_notes = notes;
+        if (priceOffer !== undefined) inq.price_offer = priceOffer;
+        if (convertedOrderId !== undefined) inq.converted_order_id = convertedOrderId;
+        db.save();
+        return inq;
+      }
+      return null;
     }
   },
 
