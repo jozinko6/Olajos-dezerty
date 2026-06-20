@@ -1,0 +1,6 @@
+{
+  "name": "Olajos dezerty Hlohovec",
+  "description": "Prémiový objednávkový a doručovací systém pre remeselnú cukráreň Olajos dezerty v Hlohovci s rozvozom a sledovaním objednávok.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
