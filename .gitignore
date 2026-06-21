@@ -4,5 +4,33 @@ dist/
 coverage/
 .DS_Store
 *.log
+<<<<<<< HEAD
 .env*
 !.env.example
+=======
+dev.log
+dev.out.log
+test
+prompt
+
+server.log
+# Skills directory
+/skills/
+
+# Database (contains password hashes — never commit)
+/db/*.db
+/db/*.db-journal
+
+# Uploads (user-generated content)
+/public/uploads/
+
+# Screenshots
+/screenshots/
+
+# Tool results & uploaded prompts (not part of the app)
+/tool-results/
+/upload/
+
+# Runtime
+/.zscripts/
+>>>>>>> 07ece86 (feat: production-ready Olajos Dezerty dessert shop)
