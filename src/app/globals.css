@@ -1,0 +1,225 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  /* Olajos brand */
+  --color-cream: var(--cream);
+  --color-cream-foreground: var(--cream-foreground);
+  --color-chocolate: var(--chocolate);
+  --color-chocolate-foreground: var(--chocolate-foreground);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-raspberry: var(--raspberry);
+  --color-raspberry-foreground: var(--raspberry-foreground);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/*
+  Olajos Dezerty — brand palette
+  - smotanová (cream)    base background
+  - čokoládová (chocolate) primary text / dark accents
+  - zlatá (gold)         highlights, prices, CTAs
+  - malinová (raspberry) accents, badges, sale
+*/
+:root {
+  --radius: 0.75rem;
+
+  /* Brand */
+  --cream: #FBF4E9;
+  --cream-foreground: #3B2417;
+  --chocolate: #3B2417;
+  --chocolate-foreground: #FBF4E9;
+  --gold: #B8893A;
+  --gold-foreground: #FFFCF5;
+  --raspberry: #B23A5C;
+  --raspberry-foreground: #FFF5F7;
+
+  /* Mapped to shadcn tokens */
+  --background: #FBF4E9;          /* cream */
+  --foreground: #3B2417;          /* chocolate */
+  --card: #FFFBF2;
+  --card-foreground: #3B2417;
+  --popover: #FFFBF2;
+  --popover-foreground: #3B2417;
+  --primary: #3B2417;             /* chocolate */
+  --primary-foreground: #FBF4E9;  /* cream */
+  --secondary: #F3E7D2;
+  --secondary-foreground: #3B2417;
+  --muted: #F3E7D2;
+  --muted-foreground: #7A5C45;
+  --accent: #B8893A;              /* gold */
+  --accent-foreground: #FFFCF5;
+  --destructive: #B23A5C;         /* raspberry as destructive in this brand */
+  --border: #E8D9BD;
+  --input: #E8D9BD;
+  --ring: #B8893A;
+  --chart-1: #B8893A;
+  --chart-2: #B23A5C;
+  --chart-3: #3B2417;
+  --chart-4: #D4AF37;
+  --chart-5: #8B5E3C;
+  --sidebar: #FFFBF2;
+  --sidebar-foreground: #3B2417;
+  --sidebar-primary: #3B2417;
+  --sidebar-primary-foreground: #FBF4E9;
+  --sidebar-accent: #F3E7D2;
+  --sidebar-accent-foreground: #3B2417;
+  --sidebar-border: #E8D9BD;
+  --sidebar-ring: #B8893A;
+}
+
+.dark {
+  --cream: #2A1A10;
+  --cream-foreground: #FBF4E9;
+  --chocolate: #FBF4E9;
+  --chocolate-foreground: #2A1A10;
+  --gold: #D4AF37;
+  --gold-foreground: #2A1A10;
+  --raspberry: #D45A7A;
+  --raspberry-foreground: #2A1A10;
+
+  --background: #2A1A10;
+  --foreground: #FBF4E9;
+  --card: #3B2417;
+  --card-foreground: #FBF4E9;
+  --popover: #3B2417;
+  --popover-foreground: #FBF4E9;
+  --primary: #FBF4E9;
+  --primary-foreground: #3B2417;
+  --secondary: #4A2C1A;
+  --secondary-foreground: #FBF4E9;
+  --muted: #4A2C1A;
+  --muted-foreground: #C9B294;
+  --accent: #D4AF37;
+  --accent-foreground: #2A1A10;
+  --destructive: #D45A7A;
+  --border: #4A2C1A;
+  --input: #4A2C1A;
+  --ring: #D4AF37;
+  --chart-1: #D4AF37;
+  --chart-2: #D45A7A;
+  --chart-3: #FBF4E9;
+  --chart-4: #B8893A;
+  --chart-5: #8B5E3C;
+  --sidebar: #3B2417;
+  --sidebar-foreground: #FBF4E9;
+  --sidebar-primary: #FBF4E9;
+  --sidebar-primary-foreground: #3B2417;
+  --sidebar-accent: #4A2C1A;
+  --sidebar-accent-foreground: #FBF4E9;
+  --sidebar-border: #4A2C1A;
+  --sidebar-ring: #D4AF37;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "cv01";
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display), var(--font-sans), serif;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Custom scrollbar for long lists */
+.olajos-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold) transparent;
+}
+.olajos-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.olajos-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.olajos-scroll::-webkit-scrollbar-thumb {
+  background: var(--gold);
+  border-radius: 9999px;
+}
+.olajos-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--chocolate);
+}
+
+/* Decorative gold gradient text */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #D4AF37 0%, #B8893A 50%, #8B5E3C 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Subtle paper texture for hero sections */
+.bg-paper-texture {
+  background-color: var(--cream);
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(184, 137, 58, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(178, 58, 92, 0.04) 0%, transparent 40%);
+}
+
+/* Decorative divider with gold dot */
+.olajos-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--gold);
+}
+.olajos-divider::before,
+.olajos-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+/* Soft card hover lift */
+.card-lift {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px -10px rgba(59, 36, 23, 0.25);
+}

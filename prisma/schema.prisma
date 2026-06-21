@@ -1,0 +1,630 @@
+// Olajos Dezerty — Prisma schema
+// Adapted from the Supabase PostgreSQL design in REPO_FIX_PLAN.md to SQLite.
+// Same relational model, same constraints (FK, unique, check, idempotency).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Users & auth
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  fullName     String?
+  phone        String?
+  role         String   @default("CUSTOMER") // CUSTOMER | ADMIN | STORE_MANAGER | PRODUCTION | PACKING | DISPATCHER | COURIER
+  isActive     Boolean  @default(true)
+  emailVerified Boolean @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  customerProfile CustomerProfile?
+  courier         Courier?
+  orders          Order[]      @relation("OrderCustomer")
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+}
+
+model CustomerProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loyaltyAccount LoyaltyAccount?
+  addresses    Address[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Address {
+  id            String   @id @default(cuid())
+  customerProfileId String
+  customerProfile CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  label         String?
+  street        String
+  streetNumber  String
+  city          String
+  postalCode    String
+  country       String   @default("Slovensko")
+  latitude      Float?
+  longitude     Float?
+  deliveryNote  String?
+  bell          String?
+  floor         String?
+  company       String?
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Branches & hours
+// ---------------------------------------------------------------------------
+
+model Branch {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  street      String
+  city        String
+  postalCode  String
+  phone       String?
+  latitude    Float?
+  longitude   Float?
+  isActive    Boolean  @default(true)
+  isMain      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  businessHours BusinessHours[]
+  inventory     Inventory[]
+  orders        Order[]
+  deliveryZones DeliveryZone[]
+}
+
+model BusinessHours {
+  id        String   @id @default(cuid())
+  branchId  String
+  branch    Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  dayOfWeek Int      // 0 = Sunday ... 6 = Saturday
+  openTime  String   // "08:00"
+  closeTime String   // "18:00"
+  isClosed  Boolean  @default(false)
+
+  @@unique([branchId, dayOfWeek])
+}
+
+// ---------------------------------------------------------------------------
+// Catalog
+// ---------------------------------------------------------------------------
+
+model ProductCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  categoryId    String
+  category      ProductCategory @relation(fields: [categoryId], references: [id])
+  name          String
+  slug          String   @unique
+  description   String?
+  longDescription String?
+  basePrice     Float    // EUR
+  imageUrl      String?
+  galleryUrls   String   @default("") // comma-separated
+  isCustomCake  Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  isFeatured    Boolean  @default(false)
+  minOrderQty   Int      @default(1)
+  maxOrderQty   Int      @default(100)
+  productionLeadHours Int @default(24)
+  taxRate       Float    @default(0.20) // 20% DPH
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  variants    ProductVariant[]
+  optionGroups ProductOptionGroup[]
+  allergens   ProductAllergen[]
+  inventory   Inventory[]
+  orderItems  OrderItem[]
+}
+
+model ProductVariant {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name        String   // e.g. "1 kg", "2 kg", "6 ks"
+  priceDelta  Float    @default(0) // added to basePrice
+  sku         String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ProductOptionGroup {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name        String   // e.g. "Darčekové balenie", "Kartička"
+  isRequired  Boolean  @default(false)
+  maxSelect   Int      @default(1)
+  sortOrder   Int      @default(0)
+
+  options ProductOption[]
+}
+
+model ProductOption {
+  id          String   @id @default(cuid())
+  groupId     String
+  group       ProductOptionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name        String   // e.g. "Áno", "S darčekovou kartičkou"
+  priceDelta  Float    @default(0)
+  isActive    Boolean  @default(true)
+}
+
+model Allergen {
+  id          String   @id @default(cuid())
+  code        String   @unique // "GLUTEN", "MILK", "EGGS", "NUTS", ...
+  name        String   // "Obiloviny obsahujúce lepk"
+  iconUrl     String?
+  products    ProductAllergen[]
+}
+
+model ProductAllergen {
+  productId String
+  allergenId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  allergen  Allergen @relation(fields: [allergenId], references: [id], onDelete: Cascade)
+
+  @@id([productId, allergenId])
+}
+
+// ---------------------------------------------------------------------------
+// Inventory (transactional, with reservations)
+// ---------------------------------------------------------------------------
+
+model Inventory {
+  id          String   @id @default(cuid())
+  productId   String
+  branchId    String
+  product     Product  @relation(fields: [productId], references: [id])
+  branch      Branch   @relation(fields: [branchId], references: [id])
+  quantity    Int      @default(0)       // on-hand
+  reservedQty Int      @default(0)       // reserved during checkout/payment window
+  minThreshold Int     @default(0)
+  updatedAt   DateTime @updatedAt
+
+  @@unique([productId, branchId])
+}
+
+model InventoryMovement {
+  id          String   @id @default(cuid())
+  productId   String
+  branchId    String
+  changeType  String   // RESTOCK | RESERVE | RELEASE | COMMIT | CANCEL_RETURN | ADJUST
+  delta       Int      // signed
+  reason      String?
+  orderId     String?
+  createdAt   DateTime @default(now())
+  createdBy   String?
+}
+
+// ---------------------------------------------------------------------------
+// Delivery zones
+// ---------------------------------------------------------------------------
+
+model DeliveryZone {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  branchId      String
+  branch        Branch   @relation(fields: [branchId], references: [id])
+  cities        String   @default("") // comma-separated city names
+  postalCodes   String   @default("") // comma-separated postal codes
+  baseFee       Float    @default(4.90)
+  freeFromAmount Float?  // free delivery above this amount
+  minOrderAmount Float?
+  estimatedMinutes Int   @default(60)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Orders & items (immutable snapshots)
+// ---------------------------------------------------------------------------
+
+model Order {
+  id              String   @id @default(cuid())
+  orderNumber     String   @unique
+  trackingToken   String   @unique // crypto.randomBytes
+  customerId      String?
+  customer        User?    @relation("OrderCustomer", fields: [customerId], references: [id])
+  branchId        String
+  branch          Branch   @relation(fields: [branchId], references: [id])
+
+  // immutable snapshot of customer & delivery
+  customerName    String
+  customerPhone   String
+  customerEmail   String
+  deliveryType    String   // DELIVERY | PICKUP
+  deliveryStreet  String?
+  deliveryStreetNumber String?
+  deliveryCity    String?
+  deliveryPostalCode String?
+  deliveryCountry String   @default("Slovensko")
+  deliveryLatitude Float?
+  deliveryLongitude Float?
+  deliveryNote    String?
+  deliveryBell    String?
+  deliveryFloor   String?
+  deliveryCompany String?
+  deliveryZoneId  String?
+  deliveryFee     Float    @default(0)
+
+  // pricing (server-calculated)
+  subtotal        Float
+  discountAmount  Float    @default(0)
+  giftPackagingFee Float   @default(0)
+  cardFee         Float    @default(0)
+  taxAmount       Float    @default(0)
+  total           Float
+
+  paymentMethod   String   // CARD_ONLINE | CASH_ON_DELIVERY | CASH_ON_PICKUP
+  status          String   @default("AWAITING_PAYMENT")
+  scheduledFor    DateTime?
+  giftPackaging   Boolean  @default(false)
+  giftCardText    String?
+  notes           String?
+
+  // loyalty
+  loyaltyPointsEarned Int @default(0)
+  loyaltyPointsRedeemed Int @default(0)
+
+  // courier
+  courierId       String?
+  courier         Courier? @relation(fields: [courierId], references: [id])
+
+  // idempotency flag for stock return on cancel
+  stockReturned   Boolean  @default(false)
+  loyaltyAwarded  Boolean  @default(false)
+  loyaltyReverted Boolean  @default(false)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+
+  items           OrderItem[]
+  statusHistory   OrderStatusHistory[]
+  payments        Payment[]
+  cashLedger      CashLedger[]
+  courierAssignment CourierAssignment?
+  auditLogs       AuditLog[]
+}
+
+model OrderItem {
+  id            String   @id @default(cuid())
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id])
+
+  // immutable snapshot
+  productName   String
+  variantName   String?
+  unitPrice     Float    // server-calculated
+  quantity      Int
+  lineTotal     Float
+  optionsSnapshot String @default("") // JSON string of selected options
+  taxRate       Float    @default(0.20)
+  isCustomItem  Boolean  @default(false)
+  productionNotes String?
+}
+
+model OrderStatusHistory {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fromStatus  String?
+  toStatus    String
+  note        String?
+  changedBy   String?
+  createdAt   DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Payments
+// ---------------------------------------------------------------------------
+
+model Payment {
+  id            String   @id @default(cuid())
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider      String   // mock | stripe | gopay
+  providerPaymentId String?
+  amount        Float
+  currency      String   @default("EUR")
+  status        String   @default("PENDING") // PENDING | AUTHORIZED | PAID | FAILED | REFUNDED
+  idempotencyKey String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  events       PaymentEvent[]
+  refunds      Refund[]
+}
+
+model PaymentEvent {
+  id          String   @id @default(cuid())
+  paymentId   String
+  payment     Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  eventType   String   // CREATED | AUTHORIZED | PAID | FAILED | REFUNDED | WEBHOOK_RECEIVED
+  payload     String   @default("{}") // JSON
+  createdAt   DateTime @default(now())
+}
+
+model Refund {
+  id          String   @id @default(cuid())
+  paymentId   String
+  payment     Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  amount      Float
+  reason      String?
+  status      String   @default("PENDING") // PENDING | COMPLETED | FAILED
+  createdAt   DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Couriers
+// ---------------------------------------------------------------------------
+
+model Courier {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleType String   @default("BIKE") // BIKE | SCOOTER | CAR
+  hasCooler   Boolean  @default(true)
+  isOnline    Boolean  @default(false)
+  maxCapacity Int      @default(5)
+  baseLatitude Float?
+  baseLongitude Float?
+  rating      Float    @default(5.0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  shifts        CourierShift[]
+  locations     CourierLocation[]
+  assignments   CourierAssignment[]
+  earnings      CourierEarning[]
+  cashLedger    CashLedger[]
+  orders        Order[]
+}
+
+model CourierShift {
+  id          String   @id @default(cuid())
+  courierId   String
+  courier     Courier  @relation(fields: [courierId], references: [id], onDelete: Cascade)
+  startTime   DateTime
+  endTime     DateTime?
+  breakStart  DateTime?
+  breakEnd    DateTime?
+  isOnline    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model CourierLocation {
+  id          String   @id @default(cuid())
+  courierId   String
+  courier     Courier  @relation(fields: [courierId], references: [id], onDelete: Cascade)
+  latitude    Float
+  longitude   Float
+  heading     Float?
+  speed       Float?
+  accuracy    Float?
+  recordedAt  DateTime @default(now())
+}
+
+model CourierAssignment {
+  id          String   @id @default(cuid())
+  orderId     String   @unique // one active assignment per order
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  courierId   String
+  courier     Courier  @relation(fields: [courierId], references: [id])
+  status      String   @default("OFFERED") // OFFERED | ACCEPTED | REJECTED | EXPIRED | MANUAL
+  offeredAt   DateTime @default(now())
+  respondedAt DateTime?
+  expiresAt   DateTime?
+  score       Float?
+  scoreReasons String  @default("") // JSON array of strings
+  rejectReason String?
+  assignedBy  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CourierEarning {
+  id          String   @id @default(cuid())
+  courierId   String
+  courier     Courier  @relation(fields: [courierId], references: [id], onDelete: Cascade)
+  orderId     String?
+  baseFee     Float    @default(0)
+  distanceFee Float    @default(0)
+  waitingFee  Float    @default(0)
+  bonusFee    Float    @default(0)
+  weekendBonus Float   @default(0)
+  deductions  Float    @default(0)
+  total       Float    @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model CashLedger {
+  id          String   @id @default(cuid())
+  courierId   String?
+  courier     Courier? @relation(fields: [courierId], references: [id])
+  orderId     String?
+  order       Order?   @relation(fields: [orderId], references: [id])
+  entryType   String   // COLLECT | HANDOVER | SETTLEMENT | ADJUST
+  amount      Float    // positive = courier holds, negative = handed over
+  expectedAmount Float?
+  changeGiven Float?
+  note        String?
+  createdAt   DateTime @default(now())
+}
+
+model CashSettlement {
+  id          String   @id @default(cuid())
+  courierId   String
+  totalCollected Float
+  totalHandedOver Float
+  difference  Float
+  note        String?
+  createdAt   DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Loyalty
+// ---------------------------------------------------------------------------
+
+model LoyaltyAccount {
+  id                String   @id @default(cuid())
+  customerProfileId String   @unique
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  points            Int      @default(0)
+  lifetimePoints    Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  transactions LoyaltyTransaction[]
+}
+
+model LoyaltyTransaction {
+  id          String   @id @default(cuid())
+  accountId   String
+  account     LoyaltyAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  type        String   // EARN | REDEEM | REFUND | EXPIRE | MANUAL_ADJUSTMENT
+  points      Int      // signed
+  orderId     String?
+  note        String?
+  createdAt   DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Promo codes
+// ---------------------------------------------------------------------------
+
+model PromoCode {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  description String?
+  discountType String  // PERCENT | FIXED
+  discountValue Float
+  minOrderAmount Float?
+  maxDiscountAmount Float?
+  usageLimit  Int?
+  usedCount   Int      @default(0)
+  validFrom   DateTime?
+  validTo     DateTime?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Custom cake & catering inquiries
+// ---------------------------------------------------------------------------
+
+model CustomCakeInquiry {
+  id            String   @id @default(cuid())
+  customerId    String?
+  contactName   String
+  contactEmail  String
+  contactPhone  String
+  eventType     String   // Narodeniny | Svadba | ...
+  eventDate     DateTime
+  guestCount    Int
+  budgetFrom    Float?
+  budgetTo      Float?
+  flavors       String   @default("")
+  message       String
+  deliveryType  String   // DELIVERY | PICKUP
+  deliveryCity  String?
+  deliveryAddress String?
+  referenceImageUrls String @default("") // comma-separated
+  gdprConsent   Boolean  @default(false)
+  contactConsent Boolean @default(false)
+  status        String   @default("NEW") // NEW | QUOTED | APPROVED | CONVERTED | REJECTED
+  quotedPrice   Float?
+  deposit       Float?
+  adminNotes    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CateringInquiry {
+  id            String   @id @default(cuid())
+  customerId    String?
+  contactName   String
+  contactEmail  String
+  contactPhone  String
+  eventType     String   // Svadba | Firemná akcia | Oslava | Candy bar
+  eventDate     DateTime
+  eventLocation String
+  guestCount    Int
+  services      String   @default("")
+  budgetFrom    Float?
+  budgetTo      Float?
+  message       String
+  gdprConsent   Boolean  @default(false)
+  contactConsent Boolean @default(false)
+  status        String   @default("NEW")
+  quotedPrice   Float?
+  deposit       Float?
+  adminNotes    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Notifications & audit
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel     String   // IN_APP | EMAIL
+  title       String
+  body        String
+  type        String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  orderId     String?
+  order       Order?   @relation(fields: [orderId], references: [id])
+  action      String
+  detail      String   @default("")
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+}
